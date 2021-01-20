@@ -13,371 +13,90 @@ import numpy as np
 import entorno as e
 import matplotlib.pyplot as plt
 import random
-import math
 from copy import copy
-from scipy.stats import bernoulli
-from itertools import combinations, permutations
-from scipy.spatial import Delaunay
-import networkx as nx
 
 
 class Data(object):
 
-    def __init__(self, data, m, grid = True, tmax = 100, alpha = False, init = True, show = True, mode = 0, vC = 1, vD = 3, orig = [50, 50], dest = [50, 50], seed=0):
+    def __init__(self, data, m, r, modo, tmax, init, show, elim=False, prepro=False, refor=False, pol=False, porc=1, seed=0):
         self.data = data
         self.m = m
-        self.mode = mode
-        self.grid = grid
+        self.r = r
+        self.modo = modo
         self.tmax = tmax
-        self.alpha = alpha
         self.init = init
         self.show = show
-        self.vC = vC
-        self.vD = vD
-        self.orig = orig
-        self.dest = dest
-        self.grid_list = []
+        self.elim = elim
+        self.prepro = prepro
+        self.refor = refor
+        self.pol = pol
+        self.porc = porc
+        self.olddata = []
         random.seed(seed)
 
-    def generar_grafo_personalizado(self, mode):
+    def generar_elipse(self):
+        radio = 5*np.random.uniform(self.r-1, self.r)
+        centro = np.random.uniform(radio, 100-radio, 2)
+        # centro = np.random.uniform(0, 100, 2)
+        P = np.identity(2)
+        q = -2*centro
+        r = centro[0]**2 + centro[1]**2 - radio**2
+        elipse = e.Elipse(P, q, r)
+        self.data.append(elipse)
 
-        self.mode = mode
+    def generar_poligono(self):
+        radio = 5*np.random.uniform(self.r-1, self.r)
+        centro = np.random.uniform(radio, 100-radio, 2)
+        nV = np.random.randint(3, 10)
+        angulos = np.linspace(0, 2*np.pi, num=nV+1) + 360*np.random.rand()
+        V = np.stack((centro[0] + radio*np.cos(angulos),
+                     centro[1] + radio*np.sin(angulos))).T
+        self.data.append(e.Poligono(V))
 
-        if self.mode == 1:
-            # Mode 1: Arbol
-            A = [30, 30]
-            B = [30, 70]
-            C = [40, 50]
-            D = [60, 50]
-            E = [70, 30]
-            F = [70, 70]
-
-            V = np.array([A, B, C, D, E, F])
-
-            Ar = np.zeros((len(V), len(V)))
-
-            Ar[0, 2] = 1
-            Ar[1, 2] = 1
-            Ar[2, 3] = 1
-            Ar[3, 4] = 1
-            Ar[3, 5] = 1
-
-            self.orig = A
-            self.dest = F
-
-            self.data.append(e.Grafo(V, Ar, 1))
-
-        if self.mode == 2:
-            # Mode 2: Triangulo
-            A = [30, 30]
-            B = [70, 30]
-            C = [50, 70]
-            D = [50, 50]
-
-            V = np.array([A, B, C, D])
-
-            Ar = np.zeros((len(V), len(V)))
-
-            Ar[0, 1] = 1
-            Ar[0, 2] = 1
-            Ar[0, 3] = 1
-            Ar[1, 2] = 1
-            Ar[1, 3] = 1
-            Ar[2, 3] = 1
-
-            self.orig = A
-            self.dest = D
-
-            self.data.append((e.Grafo(V, Ar, 1)))
-
-        if self.mode == 3:
-            # Mode 3: Estrella hexagonal
-            A = [30, 20]
-            B = [60, 20]
-            C = [75, 46]
-            D = [60, 72]
-            E = [30, 72]
-            F = [15, 46]
-            G = [45, 46]
-
-            V = np.array([A, B, C, D, E, F, G])
-
-            Ar = np.zeros((len(V), len(V)))
-
-            Ar[0, 6] = 1
-            Ar[1, 6] = 1
-            Ar[2, 6] = 1
-            Ar[3, 6] = 1
-            Ar[4, 6] = 1
-            Ar[5, 6] = 1
-
-            self.orig = G
-            self.dest = G
-
-            self.data.append((e.Grafo(V, Ar, 1)))
-
-
-
-
-        # # genero radio del Grafo
-        # radio = 5*np.random.uniform(self.r-1, self.r)
-        #
-        # # genero "centro" del grafo
-        # P = np.random.uniform(radio, 100 - radio, 2)
-        #
-        # # genero el numero de vertices del grafo
-        # # nV = np.random.randint(4, 7)
-        # # nV = 3
-        #
-        # V = np.random.uniform(P-radio, P+radio, (nV, 2))
-        # #
-        # # genero aristas del grafo
-        # p = 1
-        # sample = bernoulli.rvs(p, size=(nV, nV))
-        # alpha = np.random.rand(nV, nV)
-        # # alpha = np.ones((nV, nV))
-        #
-        # A = np.zeros((nV, nV))
-        #
-        # for i, j in combinations(range(nV), 2):
-        #     if sample[i, j] == 1:
-        #         A[i, j] = alpha[i, j]
-
-        # A = [30, 30]
-        # B = [70, 30]
-        # C = [50, 50]
-        # D = [30, 70]
-        # E = [70, 70]
-        # # F = [60, 45]
-        # # G = [30, 60]
-        # # H = [45, 60]
-        # # I = [60, 60]
-        # # J = [30, 41.59]
-        # # K = [33.70, 30]
-        # # V = np.array([A, B, C])
-        # V = np.array([A, B, C, D, E])
-        # # V = np.array([A, B, C, D]) #, E, F, G, H, I])
-        # # V = np.array([A, B, C, D, E, F, G, H, I])
-        # #
-        # Ar = np.zeros((len(V), len(V)))
-        # # Ar[0, 1] = 1
-        # # Ar[0, 3] = 1
-        # # Ar[1, 2] = 1
-        # # Ar[1, 4] = 1
-        # # Ar[2, 5] = 1
-        # # Ar[3, 4] = 1
-        # # Ar[3, 6] = 1
-        # # Ar[4, 5] = 1
-        # # Ar[4, 7] = 1
-        # # Ar[5, 8] = 1
-        # # Ar[6, 7] = 1
-        # # Ar[7, 8] = 1
-        # # Ar[0, 9] = 1
-        # # Ar[3, 9] = 1
-        # # Ar[0, 10] = 1
-        # # Ar[1, 10] = 1
-        # # Ar[9, 10] = 1
-        # Ar[0, 1] = 1
-        # # Ar[0, 2] = 1
-        # Ar[0, 3] = 1
-        # # Ar[1, 2] = 1
-        # Ar[1, 4] = 1  # Modificado, el original es [1, 4]
-        # # Ar[2, 3] = 1
-        # # Ar[2, 4] = 1
-        # Ar[3, 4] = 1
-        # self.data.append(e.Grafo(V, Ar, 1))
-
-    def generar_punto(self):
-        P = np.random.uniform(0, 100, 2)
-        self.data.append(e.Punto(P))
-
-    def generar_ciclo(self):
+    def generar_poligonal(self):
         # genero radio en funcion del tamaño
         radio = 5*np.random.uniform(self.r-1, self.r)
         V = []
         # genero un centro en el cuadrado [0, 100]
         P = np.random.uniform(radio, 100-radio, 2)
-        nV = np.random.randint(4, 7)
-        theta = np.linspace(0, 2*math.pi, nV + 1)
-        x = P[0] + radio*np.cos(theta)
-        y = P[1] + radio*np.sin(theta)
-
-        V = np.array([[i, j] for i, j in zip(x, y)])
-
-        self.data.append(e.Poligonal(V, 1))
+        nV = np.random.randint(2, 6)
+#        nV = 9
+        angulo = 360*np.random.rand()  # genero un ángulo aleatorio de giro del segmento
+        V.append(P)
+        for i in range(nV-1):
+            P = V[i]
+            angulo += 30
+            Q = np.array([P[0] + radio*np.cos(angulo),
+                         P[1] + radio*np.sin(angulo)])
+            while Q[0] <= radio or Q[1] <= radio or Q[0] >= 100-radio or Q[1] >= 100-radio:
+                #                angulo = 360*np.random.rand()
+                angulo += 30
+                Q = np.array([P[0] + radio*np.cos(angulo),
+                             P[1] + radio*np.sin(angulo)])
+            V.append(Q)
+        alpha = np.random.rand()
+        alpha = 1
+        self.data.append(e.Poligonal(V, alpha))
 
     def generar_muestra(self):
-        if self.mode == 1:
+        if self.modo == 1:
             for i in range(self.m):
                 self.generar_elipse()
-        if self.mode == 2:
+        if self.modo == 2:
             for i in range(self.m):
                 self.generar_poligono()
-        if self.mode == 3:
+        if self.modo == 3:
             for i in range(self.m):
                 self.generar_poligonal()
-        if self.mode == 4:
+        if self.modo == 4:
             for i in range(self.m):
-                self.generar_grafo()
-        if self.mode == 5:
-            for i in range(self.m):
-                self.generar_punto()
-        if self.mode == 6:
-            for i in range(self.m):
-                flag = np.random.randint(1, 5)
+                flag = np.random.randint(1, 4)
                 if flag == 1:
                     self.generar_elipse()
                 elif flag == 2:
                     self.generar_poligono()
-                elif flag == 3:
-                    self.generar_poligonal()
-                elif flag == 4:
-                    self.generar_grafo()
                 else:
-                    self.generar_punto()
-
-
-    def generar_grid(self):
-        div = 20
-
-        grid_list = []
-        nG = 0
-        while nG < self.m:
-            a = np.random.randint(0, div)
-            b = np.random.randint(0, div)
-            if (a, b) not in grid_list:
-                self.grid_list.append((a, b))
-                nG += 1
-
-    def generar_grafos(self, nV_list = []):
-        # genero radio del Grafo
-        self.data = []
-
-        div = 20
-        x = np.linspace(0, 100, div+1)
-        y = np.linspace(0, 100, div+1)
-
-        if self.grid:
-            # Grid
-            for nV, tuple in zip(nV_list, self.grid_list):
-                a, b = tuple
-                nsg_x = (x[a+1] - x[a])/nV
-                nsg_y = (y[b+1] - y[b])/nV
-
-                V1x = np.random.uniform(x[a], x[a] + nsg_x, 1)
-                V1y = np.random.uniform(y[b], y[b] + nsg_y, 1)
-
-
-                V2x = np.random.uniform(x[a+1]-nsg_x, x[a+1], 1)
-                V2y = np.random.uniform(y[b+1]-nsg_y, y[b+1], 1)
-
-
-                lista = []
-                for i in range(2, nV-1):
-                    if nV % i == 0:
-                        lista.append(i)
-
-                flag = np.random.randint(0, len(lista))
-
-                n_row = int(lista[flag])
-                n_col = int(nV/lista[flag])
-
-                Vx = np.linspace(V1x,V2x,n_col)
-                Vy = np.linspace(V1y,V2y,n_row)
-
-                nVx = len(Vx)
-                nVy = len(Vy)
-
-                width_x = (Vx[1] - Vx[0])/3
-                width_y = (Vy[1] - Vy[0])/3
-
-                lista = []
-                for i in range(n_row):
-                    for j in range(n_col):
-                        lista.append([Vx[j], Vy[i]])
-
-                V = np.array(lista)
-
-                V = np.reshape(V, (nV, 2))
-
-                edges = []
-
-                coordinates = [(i, j) for i in range(n_row) for j in range(n_col)]
-
-                for tuple1 in coordinates:
-                    for tuple2 in coordinates:
-                        if (abs(tuple1[0] - tuple2[0]) + abs(tuple1[1] - tuple2[1])==1) & (n_col*tuple1[0] + tuple1[1]> n_col*tuple2[0] + tuple2[1]):
-                            edges.append((n_col*tuple2[0] + tuple2[1], n_col*tuple1[0] + tuple1[1]))
-
-                per_x = np.random.uniform(-width_x, width_x, nV)
-                per_y = np.random.uniform(-width_y, width_y, nV)
-
-
-                for v in range(nV):
-                    V[v][0] = V[v][0] + per_x[v]
-                    if(V[v][0]<=0):
-                        V[v][0]=0
-                    elif(V[v][0]>=100):
-                        V[v][0]=100
-                    V[v][1] = V[v][1] + per_y[v]
-                    if(V[v][1]<=0):
-                        V[v][1]=0
-                    elif(V[v][1]>=100):
-                        V[v][1]=100
-
-
-                G = nx.Graph()
-
-                for v in range(nV):
-                    G.add_node(v)
-
-                for edge in edges:
-                    G.add_edge(edge[0], edge[1])
-
-                alpha = np.random.rand(nV, nV)
-                # alpha_edge = 0.5*np.ones((nV, nV))
-
-                A = np.zeros((nV, nV))
-
-                for i, j in combinations(range(nV), 2):
-                    if (i, j) in G.edges:
-                        A[i, j] = alpha[i, j]
-
-                alpha = np.random.rand()
-                # alpha_g = 0.8
-
-                self.data.append(e.Grafo(V, A, alpha))
-        else:
-            #Delaunay
-            for nV, tuple in zip(nV_list, self.grid_list):
-                a, b = tuple
-                Vx = np.random.uniform(x[a], x[a+1], nV)
-                Vy = np.random.uniform(y[b], y[b+1], nV)
-
-                V = np.array([[xi, yi] for xi, yi in zip(Vx, Vy)])
-
-                tri = Delaunay(V)
-
-                G = nx.Graph()
-
-                for v in range(nV):
-                    G.add_node(v)
-
-                for path in tri.simplices:
-                    nx.add_path(G, path)
-
-                alpha = np.random.rand(nV, nV)
-                #alpha = 0.5*np.ones((nV, nV))
-
-                A = np.zeros((nV, nV))
-
-                for i, j in combinations(range(nV), 2):
-                    if (i, j) in G.edges:
-                        A[i, j] = alpha[i, j]
-
-                alpha = np.random.rand()
-
-                self.data.append(e.Grafo(V, A, alpha))
+                    self.generar_poligonal()
 
     def vaciar_muestra(self):
         self.olddata = copy(self.data)
@@ -390,7 +109,7 @@ class Data(object):
     def reduce_radio(self, porcentaje):
         datos = copy(self.data)
         self.data = []
-        if self.mode == 1:
+        if self.modo == 1:
             for entorno in datos:
                 P = entorno.P
                 q = entorno.q
@@ -417,8 +136,8 @@ class Data(object):
 
     def dibujar_muestra(self):
         if self.init:
-            ax2 = plt.gca()
-            #ax2 = fig.add_subplot(111)
+            fig = plt.figure()
+            ax2 = fig.add_subplot(111)
 
             min_x = []
             max_x = []

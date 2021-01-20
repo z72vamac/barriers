@@ -77,8 +77,7 @@ class Poligono(object):
 
         for s in V:
             self.path.append(s)
-        self.artist = mpatches.Polygon(
-            self.path, fill = False, facecolor=None)
+        self.artist = mpatches.Polygon(self.path, fill = True, color = 'gray', alpha = 0.3, facecolor=None)
 
 
 class Poligonal(object):
