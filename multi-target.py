@@ -31,12 +31,8 @@ from auxiliar_functions import path2matrix
 
 np.random.seed(129)
 
-m = 10
-
-datos = Data([], m, modo = 3, grid = True, tmax = 600, alpha = False, init = True, show = True)
+datos = Data([], 10, grid = True, tmax = 600, alpha = False, init = True, show = True, mode = 5)
 datos.generar_muestra()
-
-data = datos.mostrar_datos()
 
 n = 2
 # datos.orig = [0, 0]
@@ -54,6 +50,8 @@ vC = datos.vC
 # datos1 = Data([], nE, 3, 1, None, False, True, 0)
 # datos1.generar_muestra()
 # E = datos1.data
+
+P = datos.data
 
 # E_index = range(nE)
 T_index = range(datos.m+2)
@@ -166,60 +164,6 @@ for t in T_index:
 
 xRt = MODEL.addVars(xRt_index, vtype=GRB.CONTINUOUS, name='xRt')
 
-# Generando los mus de la envolvente convexa, los landas de la poligonal y las
-# variables binarias que indican qué segmento se elige
-
-landa_index = []
-rho_index = []
-gammaR_index = []
-gammaL_index = []
-muR_index = []
-muL_index = []
-u_index = []
-Rp_index = []
-Lp_index = []
-
-for p in T_index_prima:
-    comp = data[p-1]
-    if type(comp) is Poligono:
-        for mu in range(comp.num_puntos):
-            mu_index.append((c, mu))
-    if type(comp) is Poligonal:
-        u_index.append(p)
-        # landa de la variable de entrada en la poligonal c
-        rho_index.append(p)
-        # landa de la variable de salida en la poligonal c
-        landa_index.append(p)
-        for segm in range(1, 1+comp.num_segmentos):
-            muR_index.append((p, segm))
-            muL_index.append((p, segm))
-        for punto in range(1, 1+comp.num_puntos):
-            gammaR_index.append((p, punto))
-            gammaL_index.append((p, punto))
-        for dim in range(N):
-            Rp_index.append((p, dim))
-            Lp_index.append((p, dim))
-
-
-landa = M.addVars(landa_index, vtype=GRB.CONTINUOUS, name='landa')
-rho = M.addVars(rho_index, vtype=GRB.CONTINUOUS, name='rho')
-
-gammaR = M.addVars(gammaR_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='gammaR')
-gammaL = M.addVars(gammaL_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='gammaL')
-
-muR = M.addVars(muR_index, vtype=GRB.BINARY, name='muR')
-muL = M.addVars(muL_index, vtype=GRB.BINARY, name='muL')
-
-u = M.addVars(u_index, vtype=GRB.BINARY, name='u')
-dp = M.addVars(u_index, vtype = GRB.CONTINUOUS, name = 'dp')
-
-landa_min = M.addVars(u_index, vtype=GRB.CONTINUOUS, lb=0.0, name='landa_min')
-landa_max = M.addVars(u_index, vtype=GRB.CONTINUOUS, lb=0.0, name='landa_max')
-
-Rp = M.addVars(Rp_index, vtype = GRB.CONTINUOUS, name = 'Rp')
-Lp = M.addVars(Lp_index, vtype = GRB.CONTINUOUS, name = 'Lp')
-
-
 MODEL.update()
 
 if datos.init:
@@ -279,8 +223,8 @@ for t in T_index_prima:
 # MODEL.addConstrs(ugt.sum('*', t) == vgt.sum('*', t) for t in T_index_prima)
 
 
-MODEL.addConstrs((difgLt[g, t, dim] >=  xLt[t, dim] - Rp[g, dim]) for g, t, dim in difgLt.keys())
-MODEL.addConstrs((difgLt[g, t, dim] >= -xLt[t, dim] + Rp[g, dim]) for g, t, dim in difgLt.keys())
+MODEL.addConstrs((difgLt[g, t, dim] >=  xLt[t, dim] - P[g-1].V[dim]) for g, t, dim in difgLt.keys())
+MODEL.addConstrs((difgLt[g, t, dim] >= -xLt[t, dim] + P[g-1].V[dim]) for g, t, dim in difgLt.keys())
 
 MODEL.addConstrs(difgLt[g, t, 0]*difgLt[g, t, 0] + difgLt[g, t, 1]*difgLt[g, t, 1] <= dgLt[g, t]*dgLt[g, t] for g, t in dgLt.keys())
 
@@ -291,19 +235,19 @@ BigM = max([np.linalg.norm(np.array(P[q].V) - np.array(P[p].V)) for p in range(d
 MODEL.addConstrs(pgLt[g, t] >= SmallM * ugt[g, t] for g, t in pgLt.keys())
 MODEL.addConstrs(pgLt[g, t] >= dgLt[g, t] - BigM * (1 - ugt[g, t]) for g, t in pgLt.keys())
 
-# MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgLt[g, t] for g, t in ugt.keys()))
-# MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*ugt[g, t] for g, t in ugt.keys()))
-#
-# MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgRt[g, t] for g, t in ugt.keys()))
-# MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*vgt[g, t] for g, t in ugt.keys()))
+MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgLt[g, t] for g, t in ugt.keys()))
+MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*ugt[g, t] for g, t in ugt.keys()))
+
+MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgRt[g, t] for g, t in ugt.keys()))
+MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*vgt[g, t] for g, t in ugt.keys()))
 
 
 # MODEL.addConstrs(BigM*(1 - ugt[g, t]) <= dgLt[g, t] for g, t in pgLt.keys())
 # MODEL.addConstrs(BigM*(1 - vgt[g, t]) <= dgRt[g, t] for g, t in pgLt.keys())
 
 
-MODEL.addConstrs((difgRt[g, t, dim] >=  Lp[g, dim] - xRt[t, dim]) for g, t, dim in difgRt.keys())
-MODEL.addConstrs((difgRt[g, t, dim] >=  Lp[g, dim] + xRt[t, dim]) for g, t, dim in difgRt.keys())
+MODEL.addConstrs((difgRt[g, t, dim] >=  P[g-1].V[dim] - xRt[t, dim]) for g, t, dim in difgRt.keys())
+MODEL.addConstrs((difgRt[g, t, dim] >= -P[g-1].V[dim] + xRt[t, dim]) for g, t, dim in difgRt.keys())
 
 MODEL.addConstrs(difgRt[g, t, 0]*difgRt[g, t, 0] + difgRt[g, t, 1]*difgRt[g, t, 1] <= dgRt[g, t]*dgRt[g, t] for g, t in dgRt.keys())
 
@@ -321,32 +265,6 @@ MODEL.addConstrs(difLRt[t, 0]*difLRt[t, 0] + difLRt[t, 1] * difLRt[t, 1] <= dLRt
 MODEL.addConstrs((pgRt.sum('*', t) + gp.quicksum(np.linalg.norm(P[g1-1].V - P[g2-1].V)*yggt[g1, g2, t] for g1 in T_index_prima for g2 in T_index_prima if g1 != g2) + pgLt.sum('*', t))/vD <= dLRt[t]/vC for t in T_index_prima)
 
 MODEL.addConstrs((dLRt[t]/vC <= 40) for t in dLRt.keys())
-
-for p in T_index_prima:
-    comp = data[p-1]
-    if type(comp) is Poligonal:
-        M.addConstr(rho[p] - landa[p] == landa_max[p] - landa_min[p], name='u0')
-        # si u = 0, entonces landa0 >= landa1
-        M.addConstr(landa_max[p] + landa_min[p] >= comp.alpha * comp.num_segmentos, name='u1')
-        M.addConstr(landa_max[p] <= comp.num_segmentos * (1 - u[p]), name='u2')
-        M.addConstr(landa_min[p] <= comp.num_segmentos * u[p], name='u3')
-        M.addConstr(dp[p] == landa_max[p] + landa_min[p])
-
-        M.addConstr(rho[p] == gp.quicksum((j-1)*muR[p, j] + gammaR[p, j] for j in range(comp.num_segmentos)))
-        M.addConstr(gammaR[p, 1] <= gammaR[p, 1])
-        M.addConstrs(gammaR[p, j] <= gammaR[p, j-1] + gammaR[p, j] for j in range(2, comp.num_segmentos))
-        M.addConstr(gammaR[p, comp.num_segmentos] <= muR[p, comp.num_segmentos])
-        M.addConstr(muR.sum(p, '*') == 1)
-        M.addConstr(gammaR.sum(p, '*') == 1)
-        M.addConstrs(Rp[p, dim] == gp.quicksum(gammaR[p, punto] * comp.V[punto][dim] for punto in range(comp.num_puntos)) for dim in range(N))
-
-        M.addConstr(landa[p] == gp.quicksum((j-1)*muL[p, j] + gammaL[p, j] for j in range(comp.num_segmentos)))
-        M.addConstr(gammaL[p, 1] <= gammaL[p, 1])
-        M.addConstrs(gammaL[p, j] <= gammaL[p, j-1] + gammaL[p, j] for j in range(2, comp.num_segmentos))
-        M.addConstr(gammaL[p, comp.num_segmentos] <= muL[p, comp.num_segmentos])
-        M.addConstr(muL.sum(p, '*') == 1)
-        M.addConstr(gammaL.sum(p, '*') == 1)
-        M.addConstrs(Lp[p, dim] == gp.quicksum(gammaL[p, punto] * comp.V[punto][dim] for punto in range(comp.num_puntos)) for dim in range(N))
 
 # MODEL.addConstrs((pgRt.sum('*', t) + gp.quicksum(np.linalg.norm(P[g1-1].V - P[g2-1].V)*yggt[g1, g2, t] for g1 in T_index_prima for g2 in T_index_prima if g1 != g2) + pgLt.sum('*', t))/vD <= 30 for t in T_index_prima)
 
