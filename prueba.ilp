@@ -1,0 +1,29 @@
+\ Model HSPPS_Model_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ R1022: - P[-1,0,0] + dif_inside[-1,0,0] >= -20
+ R1024: d_inside[-1,0] <= 10
+ R1025: - P[-1,0,1] + dif_inside[-1,0,1] >= -10
+ R1082: dist[-1,0,2,0] <= 80.13878188659973
+ R1090: dif[-1,0,2,0,0] + P[-1,0,0] >= 95
+ R1093: dif[-1,0,2,0,1] + P[-1,0,1] >= 60
+ R1118: dist[-1,0,3,1] <= 60
+ R1126: dif[-1,0,3,1,0] + P[-1,0,0] >= 90
+ qc0: [ - d_inside[-1,0] ^2 + dif_inside[-1,0,0] ^2 + dif_inside[-1,0,1] ^2
+   ] <= 0
+ qc1: [ - dist[-1,0,2,0] ^2 + dif[-1,0,2,0,0] ^2 + dif[-1,0,2,0,1] ^2 ]
+   <= 0
+ qc2: [ - dist[-1,0,3,1] ^2 + dif[-1,0,3,1,0] ^2 + dif[-1,0,3,1,1] ^2 ]
+   <= 0
+Bounds
+ dif[-1,0,2,0,0] free
+ dif[-1,0,2,0,1] free
+ dif[-1,0,3,1,0] free
+ dif[-1,0,3,1,1] free
+ P[-1,0,0] free
+ P[-1,0,1] free
+ dif_inside[-1,0,0] free
+ dif_inside[-1,0,1] free
+End

@@ -1,0 +1,455 @@
+\documentclass[a4paper]{elsarticle}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+%\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{mathtools,amssymb}
+\usepackage{subfigure}
+\usepackage{optidef}
+\usepackage{xcolor}
+\usepackage{amsthm}
+\usepackage{comment}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{mathrsfs}
+\usepackage{float}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+%\usepackage[noend]{algpseudocode}
+%\usepackage{ulem}
+\usepackage[margin=1in]{geometry}
+
+\usepackage{threeparttable}
+
+\usepackage[utf8]{inputenc}
+
+\title{The Traveling Postman Problem with Linear Barriers}
+\author{carlosvalverdemartin }
+\date{February 2021}
+
+\newcommand{\SPP}{{\sf{H-SPP-S} \xspace}}
+\newcommand{\TSP}{{\sf{H-TSP-S} \xspace}}
+\newcommand{\B}{{\mathcal B}}
+\newcommand{\VB}{{V^{}_{\mathcal B}}}
+\newcommand{\EB}{{E^{}_{\mathcal B}}}
+\newcommand{\VS}{{V^{}_{S}}}
+\newcommand{\ES}{{E^{}_{S}}}
+\newcommand{\VT}{{V^{}_{T}}}
+\newcommand{\ET}{{E^{}_{T}}}
+
+\newtheorem{remark}{Remark}
+\newtheorem{notation}{Notation}
+
+\newtheorem{prop}{Proposition}
+
+
+
+\begin{document}
+\section{MINLP Formulations}
+
+In this section it is introduced a Mixed Integer Non-Linear Programming formulation for the problems described in Section \ref{section:description}. Firstly, we set the constraints that check if two segments have crossing points or not. Then, we give the formulation for the \SPP is described and then the model \TSP is presented as an extension of the previous problem.
+
+\subsection{Checking if two segments intersect}
+
+
+\subsection{A formulation for the \SPP}
+The main idea of the \SPP is to solve a shortest path problem in the undirected graph induced by the endpoints of the barriers and the neighborhoods. Here, it is necessary to define the following sets:
+\begin{itemize}
+\item $\VS=\{P_S\}$: set composed by the point selected in the source neighborhood $N_S$.
+\item $\VB=\{P^1_B, P^2_B:B=\overline{P^1_B P^2_B}\in \mathcal B\}$: set of vertices that form the barriers of the problem.
+\item $\VT=\{P^{}_T\}$: set composed by the point selected in the target neighborhood $N_T$.
+\item $\ES=\{(P_S, P^i_{B}):P^i_B\in V_\B\text{ and } \overline{P_SP^i_B}\cap B''=\emptyset,\forall B''\in\B,\:i=1,2\}$: set of edges formed by the line segments that join the point selected in the source neighborhood and every endpoint in the barriers and do not cross any barrier in $\B$.
+\item $\EB=\{(P^{i}_B, P^{j}_{B'}):P^i_B, P^j_{B'}\in \VB \text{ and } \overline{P^i_B P^j_{B'}}\cap B''=\emptyset,\:\forall B''\in\mathcal B,\:i, j=1,2\}$: set of edges formed by the line segments that join two vertices of $V_{\mathcal B}$ and do not cross any barrier in $\B$.
+\item $\ET=\{(P^{}_T, P^i_{B}):P^i_B\in V_\B\text{ and } \overline{P^{}_TP^i_B}\cap B''=\emptyset,\forall B''\in\B,\:i=1,2\}$: set of edges formed by the line segments that join the point selected in the target neighborhood and every endpoint in the barriers and do not cross any barrier in $\B$.
+\textcolor{red}{Definimos tambien la arista que pueda unir a los dos entornos o asumimos que no hay un camino que los una? Depende del caso que consideremos el problema es convexo o no.}
+\end{itemize} 
+
+At this point, we can define the graph $G= (V, E)$ induced by the barriers and the neighborhoods, where $V=\VS\cup \VB\cup\VT$ and $E=\ES\cup\EB \cup\ET$. It is interesting to note that this graph can be split into two parts: a fixed graph $G_\B=(\VB,\EB)$ and the sets $\VS$, $\ES$, $\VT$ and $\ET$ that depend on where the points $P_S$ and $P^{}_T$ are located as shown in Figure.  The figures show how the graph $G$ is generated. The blue dashed line segments represent the edges of $\ES$, the green ones, the edges of $\ET$ and the red dashed lines, the edges of $\EB$. A special case that can be remarked occurs when the neighborhoods are points. In that case, the induced graph is completely fixed and it is only necessary to find which edges are included by keeping in mind that there can not have crossings.
+
+\input{figures/Example_ H-SPP-S_ Second Figure A}
+%\input{figures/Example_ H-SPP-S_ Second Figure B}
+
+The following computational geometry result is useful to compute the edges in $\ES,\EB$ and $\ET$:
+
+%\newcommand{\sign}{{\text{sign}}}
+\newcommand{\determinant}[3]{\det({#1|#2#3})}
+
+
+%\newcommand{\determinant}[3]{\det({#1#2#3})}
+
+
+\begin{remark}\label{rem:determinants}
+Let $\overline{P_SP_B^i}$ and $\overline{P_{B'}^1P_{B'}^2}$ be two different line segments. Let also denote $\determinant{P_S}{P_{B'}^1}{P_{B'}^2}=\det\left(\begin{array}{c|c} \overrightarrow{P^{}_SP_{B'}^1} & \overrightarrow{P^{}_SP_{B'}^2}\end{array}\right)$ the determinant whose arguments are $P^{}_S$, $P_{B'}^1$ and $P_{B'}^2$. If
+\begin{equation*}
+\normalfont{\text{sign}}\left(\determinant{P_S}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right)
+\quad
+\text{or}
+\quad
+\normalfont{\text{sign}}\left(\determinant{P_{B'}^1}{P_S}{P_B^i}\right) = \normalfont{\text{sign}}\left(\determinant{P_{B'}^2}{P_S}{P_B^i}\right)
+,
+\end{equation*}
+then $\overline{P_SP_B^i}$ and $\overline{P_{B'}^1P_{B'}^2}$ do not intersect.
+\end{remark}
+
+\newcommand{\segment}[2]{\overline{#1#2}}
+
+Since $\ES$ and $\ET$ are not fixed, the determinants in Remark \ref{rem:determinants} also depend on the location of $P_S$ and $P^{}_T$.  Hence, it is essential to model the previous constraint by using binary variables. We only focus on the case of $E_S$ but the same rationale is used for $E_T$.
+
+Let $B\in\B$ be a barrier and $P_B^i$ an endpoint of $B$. Hence, the edge $(P^{}_S, P_B^i)$ belongs to $\ES$ if
+$$\overline{P^{}_SP^i_B}\cap B'=\emptyset,\quad \forall B'\in\B,$$
+or,
+%Firstly, we will expose the constraints for two line segments $\segment{A}{B}$ and $\segment{C}{D}$ in general to model the previous remark. Afterwards, we will focus on the case for edges of $\ES$. 
+by Remark \ref{rem:determinants}, if
+\begin{equation*}
+\normalfont{\text{sign}}\left(\determinant{P_S}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right)
+\quad
+\text{or}
+\quad
+\normalfont{\text{sign}}\left(\determinant{P_{B'}^1}{P_S^{}}{P_B^i}\right) = \normalfont{\text{sign}}\left(\determinant{P_{B'}^2}{P_S^{}}{P_B^i}\right),\quad\forall B'\in\B.
+\end{equation*}
+
+%Let $B\in\B$ a barrier and $P_B^i$ and endpoint of $B$. Hence, the edge $(P_S, P_B^i)$ belongs to $\ES$ if $\overline{P^{}_SP^i_B}\cap B'=\emptyset$, for all $B'\in\B$
+%or equivalently, by the Remark \ref{rem:determinants}:
+%\begin{equation*}
+%\normalfont{\text{sign}}\left(\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right)
+%\quad
+%\text{or}
+%\quad
+%\normalfont{\text{sign}}\left(\determinant{P^{}_S}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right),
+%\quad\forall B'\in\B.
+%\end{equation*}
+%$$=\emptyset,\quad\forall B''\in\B,$$
+\newcommand{\LS}[3]{L(#1|#2#3)}
+\newcommand{\US}[3]{U(#1|#2#3)}
+\newcommand{\alphamas}[3]{\alpha(#1|#2#3)}
+\newcommand{\alphamenos}[3]{\alpha^{-}(#1|#2#3)}
+%\newcommand{\alphacero}[3]{\alpha^{0\,}(#1|#2#3)}
+\newcommand{\alphapunto}[3]{\alpha^{\cdotp}(#1|#2#3)}
+
+To model the sign of a determinant defined by the points $P_S^{}$, $P_{B'}^1$ and $P_{B'}^2$, we introduce the following binary variable:
+\begin{itemize}
+\item $\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is positive and zero, otherwise.
+%\item $\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is negative and zero, otherwise.
+%\item $\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is zero and zero, otherwise.
+\end{itemize}
+Note that the case when the determinant is null is not considered , because segments are located in general position.
+
+It is possible to represent the sign condition by including the following constraints:
+%\begin{equation}\tag{sign+}\label{eq:sign}
+%\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\left(1-\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right)\leq \determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2}\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2},
+%\end{equation}
+%\begin{align*}\tag{sign}\label{eq:sign}
+%\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}&\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2},\\
+%\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}&\geq \LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2},\\
+%\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}+\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2}& = 1,
+%\end{align*}
+\begin{equation}\tag{$\alpha$-C}\label{eq:alphaC}
+\left[1-\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right]\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2},
+\end{equation}
+
+where $\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\US{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ are a lower and a upper bound for the determinant, respectively. If the determinant is positive, then $\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ must be one to make the second inequality feasible. The analagous case happens if the determinant is not positive.
+
+\newcommand{\betamas}[4]{\beta(#1#2|#3#4)}
+%\newcommand{\betamenos}[4]{\beta^{-}(#1#2|#3#4)}
+%\newcommand{\betacero}[4]{\beta^{0\,}(#1#2|#3#4)}
+%\newcommand{\betapunto}[4]{\beta^{\cdotp}(#1#2|#3#4)}
+
+Now, to check if two determinants $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ have the same sign, it is required to introduce the binary variables:
+
+\begin{itemize}
+\item $\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ have the same sign, zero otherwise.
+%\item $\betamenos{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both negative.
+%\item $\betacero{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both zero.
+\end{itemize}
+
+\newcommand{\gammaprod}[4]{\gamma(#1#2|#3#4)}
+
+Hence, the $\beta$ variable can be represented by the equivalence constraint of the $\alpha$ variables
+\begin{align*}\tag{$\beta$-C}\label{eq:betaC}
+\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2}\alphamas{P_B^i}{P_{B'}^1}{P_{B'}^2} + \left[1-\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right]\left[1-\alphamas{P_B^i}{P_{B'}^1}{P_{B'}^2}\right],\\
+\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=2\gammaprod{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} -\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2}-\alphamas{P_B^i}{P_{B'}^1}{P_{B'}^2}+1,
+%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=1-\left|\alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2}-\alphamas{P_B^i}{P_{B'}^1}{P_{B'}^2}\right|,
+\end{align*}
+where $\gammaprod{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ is the auxiliary binary variable that models the product of the $\alpha$ variables that can be linearized by using the following constraints:
+\begin{align*}\tag{$\gamma$-C}\label{eq:gammaC}
+\gammaprod{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \leq \alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2},\\
+\gammaprod{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \leq \alphamas{P_B^i}{P_{B'}^1}{P_{B'}^2},\\
+\gammaprod{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \geq \alphamas{P_S^{}}{P_{B'}^1}{P_{B'}^2} + \alphamas{P_B^i}{P_{B'}^1}{P_{B'}^2} - 1.
+\end{align*}
+ 
+
+\newcommand{\deltacheck}[4]{\delta(#1#2|#3#4)}
+
+Finally, we need to check if there exists any coincidence in the sign of the determinants, so we define the binary variable $\deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ that is one if $\segment{P_S}{P_B^i}$ and $\segment{P_{B'}^1}{P_{B'}^2}$ do not intersect and zero, otherwise. This condition can be modelled by using these disjunctive constraints:
+\begin{equation*}\tag{$\delta$-C}\label{eq:deltaC}
+\frac{1}{2}\left[\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}+\betamas{P_{B'}^1}{P_{B'}^2}{P_S^{}}{P_B^i}\right]\leq\deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}\leq 2\left[\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}+\betamas{P_{B'}^1}{P_{B'}^2}{P_S^{}}{P_B^i}\right].
+\end{equation*}
+If there exists a sign coincidence, then $\deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ is one to satisfy the first constraint, and the second one is always fullfilled. However, if the sign of the determinants is not the same, then the second constraint is active and $\deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ is null. Finally, $(P^{}_S,P_B^i)\in\ES$ if
+%However, if those segments intersect, we need to ensure that $\deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ is zero. It can be done by inserting the term $\epsilon \deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ in the objective function, where $\epsilon>0$ is a small value.
+\newcommand{\varepsilonvar}[2]{\varepsilon(#1#2)}
+% At this point, we will focus on the description of the edges of $\ES$.
+$$\deltacheck{P^{}_S}{P_B^i}{P^1_{B'}}{P^2_{B'}}=1,\quad\forall B'\in\B.$$
+Hence, if we denote by $\varepsilonvar{P^{}_S}{P_B^i}$ the binary variable that is one when $(P^{}_S,P_B^i)\in\ES$, this variable can be represented by means of the following inequalities:
+\begin{equation*}\tag{$\varepsilon$-C}\label{eq:varepsilonC}
+\left[\sum_{B'\in\mathcal B}\deltacheck{P^{}_S}{P_B^i}{P^1_{B'}}{P^2_{B'}}-|\mathcal B|\right] + 1\leq \varepsilonvar{P^{}_S}{P_B^i}\leq \frac{1}{|\B|}\sum_{B'\in\mathcal B}\deltacheck{P^{}_S}{P_B^i}{P^1_{B'}}{P^2_{B'}}.
+\end{equation*}
+If there is a barrier $B'\in\B$ that intersects the segment $\overline{P^{}_SP_B^i}$, then $\deltacheck{P^{}_S}{P_B^i}{P^1_{B'}}{P^2_{B'}}$ is zero and the second inequality enforces $\varepsilonvar{P^{}_S}{P_B^i}$ to be zero because the right side is fractional and the first inequality is non-positive. Nonetheless, if there is not any barrier that intersects the segment, then $\varepsilonvar{P^{}_S}{P_B^i}$ is equals to one, because the left side of the first inequality is one and the right side of the second inequality too.
+
+\newcommand{\yvar}[2]{y(#1#2)}
+\newcommand{\dvar}[2]{d(#1#2)}
+
+
+Now, we can define the path that the drone can follow by taking into account the edges of the induced graph. Let $\yvar{PQ}$ be the binary variable that is one if the drone goes from $P$ to $Q$. Then, the inequalities
+\begin{equation*}\tag{y-C}\label{eq:yC}
+\yvar{P^{}_S}{P_B^i}\leq \varepsilonvar{P^{}_S}{P_B^i},\quad\forall P_B^i\in \VB.
+\end{equation*}
+assure that the drone can go from $P_S^{}\in \VS$ to a point of a barrier only if it does not cross any barrier. 
+
+Next, we need to introduce the continuous variable $\dvar{PQ}$ that represents the distance between $P$ and $Q$. To model this distance, we use the following second order cone constraints:
+\begin{equation*}\tag{d-C}\label{eq:dC}
+\|P - Q\|\leq \dvar{P}{Q},\quad\forall (P,Q)\in E.
+\end{equation*}
+
+Finally, we assume that the sets $N_S$ and $N_T$ are second order cone (SOC) representable, that is, the sets can be represented by using second-order cone constraints:
+
+\begin{equation*}
+ P^{}_S\in N^{}_S \Longleftrightarrow
+  \|A_S^i P_S^{} + b_S^i\| \leq (c_S^i)^T P_S^{} + d_S^i,\quad i=1,\ldots,nc_S, \\
+\end{equation*}
+%\begin{equation}\label{C-C}\tag{$\mathcal{C}$-C}
+%    \|B_ix + b_i\|\leq c_i^Tx + d_i,\quad i=1,\ldots,N,
+%\end{equation}
+where $A_S^i, b_S^i, c_S^i$ and $d_S^i$ are parameters of the constraint $i$ and $nc_S$ denotes the number of constraints that appear in the block associated to the neighborhood $N_S$.
+
+It is remarkable that these inequalities can model the special case of linear constraints (for $A_S^{i}, b_S^i\equiv 0$), ellipsoids and hyperbolic constraints (see \cite{Lobo1998} for more information).
+
+At this time, we have all the necessary elements to give a MINLP formulation for the \SPP as follows:
+%\begin{align*}\tag{H-SPP-S}
+%&\text{min} &\sum_{(P,P_B)\in E}\dvar{P}{P_B}\yvar{P}{P_B}&\\
+%&\text{s.a.}  \quad &\sum_{\{P_B:(P, P_B)\in E\}}\yvar{P}{P_B}-\sum_{\{P_B:(P_B, P)\in E\}}\yvar{P_B}{P} &= 
+%\left\{
+%\begin{array}{rl} 
+%1, & \text{if } P\in\VS, \\
+%0, & \text{if } P\in\VB, \\
+%-1, & \text{if } P\in\VT.
+%\end{array}.
+%\right.\\\\
+%& & P_S\in N_S,\, P_T\in N_T\\
+%& & \eqref{eq:alphaC},\eqref{eq:betaC},\eqref{eq:gammaC},\eqref{eq:deltaC},\eqref{eq:yC}.
+%\end{align*}
+
+\begin{mini*}
+{}{\sum_{(P,Q)\in E}\dvar{P}{Q}\yvar{P}{Q}}
+{\label{eq:Example1}}{\tag{H-SPP-S}}
+\addConstraint{\sum_{\{Q:(P, Q)\in E\}}\yvar{P}{Q}-\sum_{\{Q:(Q, P)\in E\}}\yvar{Q}{P}}{=\left\{
+\begin{array}{rl} 
+1, & \text{if } P\in\VS, \\
+0, & \text{if } P\in\VB, \\
+-1, & \text{if }P\in\VT.
+\end{array}
+\right.}
+\addConstraint{\eqref{eq:alphaC},\eqref{eq:betaC},\eqref{eq:deltaC},\eqref{eq:varepsilonC},\eqref{eq:yC},\eqref{eq:dC}}{ }
+\addConstraint{P_S\in N_S,\, P_T\in N_T.}{ }
+\end{mini*}
+
+The objective function minimizes the length of the path followed by the drone in the edges of the induced graph. The first constraints are the flow conservation constraints, the second constraints represent the sets $\ES$ and $\ET$ and the third ones state that the point selected must be in their respective neighborhoods.
+
+
+\subsection{A formulation for the \TSP}
+
+
+%Note that this problem is not convex because the determinants that model the orientation of the points to check if there exist crossings produce product of variables. 
+
+%\begin{equation*}
+%\normalfont{\text{sign}}\left(\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right)
+%\quad
+%\text{or}
+%\quad
+%\normalfont{\text{sign}}\left(\determinant{P^{}_S}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right),
+%\quad\forall B'\in\B.
+%\end{equation*}
+%%$$=\emptyset,\quad\forall B''\in\B,$$
+%\newcommand{\LS}[3]{L(#1|#2#3)}
+%\newcommand{\US}[3]{U(#1|#2#3)}
+%\newcommand{\alpha}[3]{\alpha^{+}(#1|#2#3)}
+%\newcommand{\alphamenos}[3]{\alpha^{-}(#1|#2#3)}
+%\newcommand{\alphacero}[3]{\alpha^{0\,}(#1|#2#3)}
+%\textcolor{red}{Consideramos el caso en el que los puntos estan alineados?}
+%
+%To model the sign of the determinant $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, we define the following binary variables:
+%\begin{itemize}
+%\item $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is strictly positive and zero, otherwise.
+%\item $\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is strictly negative and zero, otherwise.
+%\item $\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is zero and zero, otherwise.
+%\end{itemize}
+%
+%
+%It is possible to represent the sign condition by including the following constraints:
+%%\begin{equation}\tag{sign+}\label{eq:sign}
+%%\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\left(1-\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right)\leq \determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2}\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2},
+%%\end{equation}
+%\begin{align*}\tag{sign}\label{eq:sign}
+%\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}&\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2},\\
+%\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}&\geq \LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2},\\
+%\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}+\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2}+\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2}& = 1,
+%\end{align*}
+%where $\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\US{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ are a lower and a upper bound for the determinant, respectively. If the determinant is strictly positive, then $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ must be one to make the first inequality feasible, the second inequality is always fulfilled and the third one sets the other indicator variables to zero. The analagous case happens if the determinant is strictly negative. However, if the determinant is equal to zero, both inequalities are fulfilled and it is necessary to include the term $\epsilon (1-\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2})$ in the objective function, where $\epsilon>0$ is a small value, to ensure that $\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is equal to one when the determinant is zero.
+%
+%\newcommand{\betamas}[4]{\beta^{+}(#1#2|#3#4)}
+%\newcommand{\betamenos}[4]{\beta^{-}(#1#2|#3#4)}
+%\newcommand{\betacero}[4]{\beta^{0\,}(#1#2|#3#4)}
+%
+%At this point, it is required to introduce the binary variables that checks if both determinants are positive, negative or null:
+%
+%\begin{itemize}
+%\item $\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both positive.
+%\item $\betamenos{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both negative.
+%\item $\betacero{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both zero.
+%\end{itemize}
+%
+%Hence, the $\beta$ variables can be represented by the product of the $\alpha$ variables:
+%\begin{align*}
+%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=\alpha{P_{B'}^1}{P^{}_S}{P^i_B}\:\alpha{P_{B'}^2}{P^{}_S}{P^i_B},\\
+%\betamenos{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=\alphamenos{P_{B'}^1}{P^{}_S}{P^i_B}\:\alphamenos{P_{B'}^2}{P^{}_S}{P^i_B},\\
+%\betacero{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=\alphacero{P_{B'}^1}{P^{}_S}{P^i_B}\:\alphacero{P_{B'}^2}{P^{}_S}{P^i_B}.
+%\end{align*}
+%
+%These products can be linearized by means of these constraints:
+%$$
+%\left\{\begin{array}{rcl}
+%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \leq & \alpha{P_{B'}^1}{P^{}_S}{P^i_B},\\\\
+%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \leq & \alpha{P_{B'}^2}{P^{}_S}{P^i_B},\\\\
+%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \geq & \alpha{P_{B'}^1}{P^{}_S}{P^i_B} + \alpha{P_{B'}^2}{P^{}_S}{P^i_B} - 1.\end{array}\right.
+%$$
+%
+% $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ that attains minus one if the sign of the determinant is negative, zero, if the determinant is zero, and one, if the determinant is positive. The following constraints set the sign condition:
+%\begin{equation}\tag{sign}\label{eq:sign}
+%\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2})\left(1-\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right),
+%\end{equation}
+% If the determinant is negative, then the right side of the equation must be zero, and $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is one. Analogously, if the determinant is non-negative, then the left side must be zero and $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is also zero.
+%
+%%In the left picture, the number of incident edges $|E_S|$ on $N_S$ is 4 whereas the right picture is 6.
+
+\section{Strengthening the formulation of \TSP}
+\textcolor{red}{Incluir el resultado estructural que da una cota superior del numero de bolas que se puede generar}
+\subsection{Preprocessing}
+In this subsection, we show a preprocessing result that allows to fix some variables by taking into account the relative position between the neighborhoods and the barriers.
+In particular, we are going to present an outcome that ensures that there are some barriers whose endpoints can not be incident in the edges of $E_N$ and it is not necessary to include it in $E_N$. 
+
+The first issue that is solved is the one when the neighborhoods are segments. Let $N = \overline{P^1_N P^2_N}$ be a line segment and $B = \overline{P^1_BP^2_B}\in\mathcal B$ a barrier. Let also be
+\begin{align*}
+\text{cone}(P,Q,R)&:=\{\mu_1 \overrightarrow{PQ}+\mu_2\overrightarrow{PR}:\mu_1,\mu_2\geq 0\},\\
+\text{cone}(P,Q,R)^-&:=\{\mu_1 \overrightarrow{PQ}+\mu_2\overrightarrow{PR}:\mu_1,\mu_2\geq 0,\:\mu_1+\mu_2\leq 1\},\\
+\text{cone}(P,Q,R)^+&:=\{\mu_1 \overrightarrow{PQ}+\mu_2\overrightarrow{PR}:\mu_1,\mu_2\geq 0,\:\mu_1+\mu_2\geq 1\}.
+\end{align*}
+Note that, $cone(P, Q, R)$ is the union of $\text{cone}(P,Q,R)^-$ and $\text{cone}(P,Q,R)^+$. It is also important to remark that $\text{cone}(P,Q,R)^+$ is the part of cone that crosses the barrier $\overline{QR}$ when we consider a segment whose endpoints are $P$ and another point of this set, i.e.
+$$\text{cone}(P,Q,R)^+=\{P':\overline{PP'}\cap\overline{QR}\neq\emptyset\}.$$
+
+In the following proposition, we give a sufficient condition to not include the edge $(P^{}_N, P^i_B)$ in $E_N$:
+
+\begin{prop}
+
+Let $B'=\overline{P^1_{B'}P^2_{B'}}\in\mathcal B$ and $\normalfont{\text{cone}}(P^i_B, P^1_{B'}, P^2_{B'})^+$ the conical hull generated by these points. If
+$$N\subset\bigcup_{B'\in\mathcal B}\normalfont{\text{cone}}(P^i_B, P^1_{B'}, P^2_{B'})^+,$$
+then $(P^{}_N, P^i_B)\not\in E_N$.
+
+%Let $B'=\overline{P^1_{B'}P^2_{B'}}\in\mathcal B$ and $Q(B')$ the intersection point of the straight lines that join points of $N$ and $B'$ that lies outside of the convex hull generated by thse line segments. Let $\normalfont{\text{cone}}(\{\overrightarrow{Q(B')P^1_N},\overrightarrow{Q(B')P^2_N}\})$ the conical hull of these vectors. If
+%$$B\subset\bigcup_{B'\in\mathcal B}\normalfont{\text{cone}}(\{\overrightarrow{Q(B')P^1_N},\overrightarrow{Q(B')P^2_N}\}),$$
+%then $(P^{}_N, P^i_{B})\not\in E_N$, $i=1,2$.
+\end{prop}
+\begin{proof}
+If $P_N\in N$, then there exists a $B'\in\mathcal B$ such that 
+$P_N\in \normalfont{\text{cone}}(P^i_B, P^1_{B'}, P^2_{B'})^+$. Therefore, $\overline{P^i_B P^{}_N}\cap B'\neq\emptyset$ and $(P^{}_N, P^i_B)\not\in E_N$, as we claimed.
+\end{proof}
+
+We can check computationally the condition of the previous proposition by using the following procedure. Let $r_N$ the straight line that contains the line segment $N$.
+
+\begin{algorithm}[H]
+\SetKwInOut{Input}{Initialization}\SetKwInOut{Output}{output}
+
+ \Input{Let $P^i_B$ be the point whose edge $(P^i_B, P^{}_N)$ is going to check if $(P^{}_N, P^i_B)\not\in E_N$.\\
+Set $flag=True$, $points = \{\}.$}
+% Set $LB=0$, $UB=+\infty$, $\bar z=z^0$.}
+
+ \For{$B'\in\mathcal B$}{
+ 	\For{$j\in\{1, 2\}$}{
+Compute the straight line $r(P^i_B, P^j_{B'})$ that contains the points $P^i_B$ and $P^j_{B'}$. \\
+Intersect $r(P^i_B, P^j_{B'})$ and $r_N$ in the point $Q^j_{B'}$.\\
+\If{$\|\overline{P^i_BQ^j_{B'}}\|\geq \|\overline{P^i_BP^j_{B'}}\|$}
+{Include $Q^j_{B'}$ in $points$.}
+}
+}
+\end{algorithm}
+
+
+
+\textcolor{red}{Estudiar resultados que eliminen algunas de las posibles aristas de $E_S$ y $E_T$}
+\textcolor{red}{Hablar que las aristas $E_{\mathcal B}$ se pueden preprocesar porque los puntos están fijados}
+
+\subsection{Valid inequalities}
+This subsection is devoted to show some results that adjust the big-M constants that appear in the previous formulation, specifically, in the \eqref{eq:alphaC}, where the modelling of the sign requires to compute the lower and upper bounds $L$ and $U$, respectively. We are going to expose that these bounds can be computed explicitly for the cases when the neighborhoods are ellipses and segments.
+
+Let $\overline{P^1_{B'}P^2_{B'}}=B'\in\B$ be a barrier and $P_S\in N_S$. Let $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ also be the determinant whose values must be bounded. Hence, the solution of the following problem gives the lower bound of the determinant:
+\begin{equation*}\label{eq:L-Problem}\tag{L-Problem}
+\overline{L}=\min_{P_S=(x,y)\in N_S}F(x,y):=\determinant{P^{}_S}{P_{B'}^1}{P_{B'}^2}=\left|
+\begin{array}{cc}
+P^{1}_{B'_x}-x & P^{2}_{B'_x}-x \\
+P^{1}_{B'_y}-y & P^{2}_{B'_y}-y
+\end{array}
+\right|.
+\end{equation*}
+
+\subsubsection{Lower and upper bounds when the neighborhoods are ellipsoids}
+The first case that is considered is the one when $N_S$ is an ellipse, that is, $N_S$ is represented by the following inequality:
+$$N_S=\{(x,y)\in\mathbb R^2:ax^2+by^2+cxy+dx+ey+f\leq 0\}=$$
+where $a, b, c, d, e, f$ are coefficients of the ellipse.
+In an extended form, we need to find:
+\begin{mini*}
+{}{F(x, y)=\left|
+\begin{array}{cc}
+P^{1}_{B'_x}-x & P^{2}_{B'_x}-x \\
+P^{1}_{B'_y}-y & P^{2}_{B'_y}-y
+\end{array}
+\right|=xP^{1}_{B'_y}-xP^{2}_{B'_y}+yP^{2}_{B'_x}-yP^{1}_{B'_x}+P^{1}_{B'_x}P^{2}_{B'_y}-P^{1}_{B'_y}P^{2}_{B'_x},}
+{\label{eq:Example1}}{\tag{L-Ellipse}}
+\addConstraint{ax^2+by^2+cxy+dx+ey+f\leq 0.}
+\end{mini*}
+Since we are minimizing a linear function in a convex set, we can conclude that the extreme points are located in the frontier, so we can use the Lagrangian function to compute these points.
+$$F(x,y;\lambda)=xP^{1}_{B'_y}-xP^{2}_{B'_y}+yP^{2}_{B'_x}-yP^{1}_{B'_x}+P^{1}_{B'_x}P^{2}_{B'_y}-P^{1}_{B'_y}P^{2}_{B'_x}+\lambda(ax^2+by^2+cxy+dx+ey+f).$$
+
+$$\nabla F(x,y;\lambda)=0\Longleftrightarrow
+\left\{\begin{array}{rcll}
+\frac{\partial F}{\partial x} & = & P^{1}_{B'_y}-P^{2}_{B'_y}+2ax\lambda+cy\lambda+d\lambda& =0,\\
+\frac{\partial F}{\partial y} & = & P^{2}_{B'_x}-P^{1}_{B'_x}+2by\lambda+cx\lambda+e\lambda& =0,\\
+\frac{\partial F}{\partial \lambda} & = & ax^2+by^2+cxy+dx+ey+f& =0.\\
+\end{array}\right.$$
+From the first two equations we can obtain:
+
+$$\lambda = \frac{P^{2}_{B'_y}-P^{1}_{B'_y}}{2ax+cy+d}=\frac{P^{1}_{B'_x}-P^{2}_{B'_x}}{2by+cx+e}.$$
+From this equality, we can express $y$ as a function of $x$:
+\begin{align*}
+(P^{2}_{B'_y}-P^{1}_{B'_y})(2by+cx+e)&=(P^{1}_{B'_x}-P^{2}_{B'_x})(2ax+cy+d),\\
+y\left[2b(P^{2}_{B'_y}-P^{1}_{B'_y})-c(P^{1}_{B'_x}-P^{2}_{B'_x})\right]&=\left[2a(P^{1}_{B'_x}-P^{2}_{B'_x})-c(P^{2}_{B'_y}-P^{1}_{B'_y})\right]x+\left[d(P^{1}_{B'_x}-P^{2}_{B'_x})-e(P^{2}_{B'_y}-P^{1}_{B'_y})\right],\\
+y&=\left[\frac{2a(P^{1}_{B'_x}-P^{2}_{B'_x})-c(P^{2}_{B'_y}-P^{1}_{B'_y})}{2b(P^{2}_{B'_y}-P^{1}_{B'_y})-c(P^{1}_{B'_x}-P^{2}_{B'_x})}\right]x+\left[\frac{d(P^{1}_{B'_x}-P^{2}_{B'_x})-e(P^{2}_{B'_y}-P^{1}_{B'_y})}{2b(P^{2}_{B'_y}-P^{1}_{B'_y})-c(P^{1}_{B'_x}-P^{2}_{B'_x})}\right],\\
+y&=mx+n.
+\end{align*}
+Finally, we can substitute $y$ in the third equation to compute the value of $x$:
+\begin{align*}
+ax^2+by^2+cxy+dx+ey+f &= ax^2+b(mx+n)^2+cx(mx+n)+dx+e(mx+n)+f =\\
+&= (a+bm^2+cm)x^2+(2bmn+cn+d+em)x+(n^2b+en+f)=0.
+\end{align*}
+By using the standard form of the solution of a second grade equation:
+\begin{align*}
+x^{\pm}&=\frac{-(2bmn+cn+d+em)\pm\sqrt{(2bmn+cn+d+em)^2-4(a+bm^2+cm)(n^2b+en+f)}}{2(a+bm^2+cm)},\\
+y^{\pm}&=mx^{\pm}+n.
+\end{align*}
+Hence, to compute the lower and upper bound, we only need to evaluate $x^{\pm}$ and $y^{\pm}$ in the objective function and the lowest and highest value correspond to $\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\US{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, respectively.
+
+\subsubsection{Lower and upper bounds when the neighborhoods are line segments}
+In this case, the segment whose endpoints are $P^1_{N_S}$ and $P^2_{N_S}$ can be expressed as the following convex set:
+$$N_S=\{(x,y)\in\mathbb R^2:(x,y)=\mu P^1_{N_S}+(1-\mu)P^2_{N_S}, 0\leq\mu\leq1\}.$$
+Since we are optimizing a linear function in a compact set we can conclude that the objective function in \eqref{eq:L-Problem} achieves its minimum and its maximum in the extreme points of $N_S$, that is, in $P^1_{N_S}$ and $P^2_{N_S}$. 
+
+\end{document}

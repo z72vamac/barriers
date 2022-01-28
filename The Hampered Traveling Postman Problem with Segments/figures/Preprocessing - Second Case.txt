@@ -1,0 +1,54 @@
+\documentclass[10pt]{article}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.15}
+\usepackage{mathrsfs}
+\usetikzlibrary{arrows}
+\pagestyle{empty}
+\begin{document}
+\definecolor{ffqqqq}{rgb}{1,0,0}
+\definecolor{qqqqff}{rgb}{0,0,1}
+\definecolor{cqcqcq}{rgb}{0.7529411764705882,0.7529411764705882,0.7529411764705882}
+\begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1cm,y=1cm]
+\draw [color=cqcqcq,, xstep=2cm,ystep=2cm] (-7.589166917311118,-4.641372518276001) grid (23.74726566897392,19.829834554406034);
+\clip(-7.589166917311118,-4.641372518276001) rectangle (23.74726566897392,19.829834554406034);
+\draw [line width=4pt,color=qqqqff] (2,4)-- (6,4);
+\draw [line width=4pt,color=ffqqqq] (10,14)-- (17,11);
+\draw [line width=4pt,color=ffqqqq] (6,10)-- (10,6);
+\draw [line width=4pt,color=ffqqqq] (6,18)-- (4,10);
+\draw [line width=2pt,color=qqqqff,domain=-7.589166917311118:23.74726566897392] plot(\x,{(--16-0*\x)/4});
+\draw [line width=2pt,dash pattern=on 1pt off 1pt,domain=-7.589166917311118:23.74726566897392] plot(\x,{(--96-4*\x)/4});
+\draw [line width=2pt,dash pattern=on 1pt off 1pt,domain=-7.589166917311118:23.74726566897392] plot(\x,{(-44-4*\x)/-6});
+\draw [line width=2pt,dash pattern=on 1pt off 1pt,domain=-7.589166917311118:23.74726566897392] plot(\x,{(-16-4*\x)/-4});
+\draw [line width=2pt,dash pattern=on 1pt off 1pt] (10,-4.641372518276001) -- (10,19.829834554406034);
+\draw [color=qqqqff](23.3320302548447,6.5146189413290445) node[anchor=north west] {\mathbf{$r_N$}};
+\draw [color=qqqqff](2.0719770514287026,3.94015937372788) node[anchor=north west] {\mathbf{$P_N^1$ $\lambda_N^1=0$}};
+\draw [color=qqqqff](4.923260228449338,3.9955240956117763) node[anchor=north west] {\mathbf{$P^2_N$ $\lambda_N^2=1$}};
+\draw [color=ffqqqq](6.058237027069202,19.33155205745097) node[anchor=north west] {\mathbf{$P^1_1$}};
+\draw [color=ffqqqq](4.009742317365056,10.44551419508566) node[anchor=north west] {\mathbf{$P^2_1$}};
+\draw [color=ffqqqq](6.418107719314524,11.02684377486657) node[anchor=north west] {\mathbf{$P^1_2$}};
+\draw [color=ffqqqq](10.099861724593596,7.317407408645537) node[anchor=north west] {\mathbf{$P^2_2$}};
+\draw [color=ffqqqq](-6.0943194264459315,3.8017475690181404) node[anchor=north west] {\mathbf{$Q_1^2$ $\mu^2_1=2.5$ $\lambda^2_1=-1.75$}};
+\draw [->,line width=2.8pt,color=qqqqff] (2,4) -- (6,4);
+\draw [color=ffqqqq](-0.862353208417776,3.857112290902036) node[anchor=north west] {\mathbf{$Q^1_2$ $\mu_2^1=2.5$ $\lambda_2^1=-0.5$}};
+\draw [color=ffqqqq](10.210591168361388,3.8017475690181404) node[anchor=north west] {\mathbf{$Q^2_2$ $\mu_2^2=1.25$ $\lambda_2^2=2$}};
+\draw [color=ffqqqq](17.90628751022291,3.746382847134244) node[anchor=north west] {\mathbf{$Q^1_1$ $\mu_1^1=-2.5$ $\lambda_1^1=M<<0$}};
+\draw [->,line width=2.8pt,color=ffqqqq] (10,14) -- (6,10);
+\draw [->,line width=2.8pt,color=ffqqqq] (10,14) -- (6,18);
+\draw [->,line width=2.8pt,color=ffqqqq] (10,14) -- (4,10);
+\draw [->,line width=2.8pt,color=ffqqqq] (10,14) -- (10,6);
+\begin{scriptsize}
+\draw [fill=qqqqff] (2,4) circle (2.5pt);
+\draw [fill=qqqqff] (6,4) circle (2.5pt);
+\draw [fill=ffqqqq] (10,14) circle (4.5pt);
+\draw [color=ffqqqq] (17,11) circle (4.5pt);
+\draw [color=ffqqqq] (6,10) circle (4.5pt);
+\draw [color=ffqqqq] (10,6) circle (4.5pt);
+\draw [color=ffqqqq] (6,18) circle (4.5pt);
+\draw [color=ffqqqq] (4,10) circle (4.5pt);
+\draw [color=ffqqqq] (-5,4)-- ++(-4pt,-4pt) -- ++(8pt,8pt) ++(-8pt,0) -- ++(8pt,-8pt);
+\draw [color=ffqqqq] (0,4)-- ++(-4pt,-4pt) -- ++(8pt,8pt) ++(-8pt,0) -- ++(8pt,-8pt);
+\draw [color=ffqqqq] (10,4)-- ++(-4pt,-4pt) -- ++(8pt,8pt) ++(-8pt,0) -- ++(8pt,-8pt);
+\draw [color=ffqqqq] (20,4)-- ++(-4pt,-4pt) -- ++(8pt,8pt) ++(-8pt,0) -- ++(8pt,-8pt);
+\end{scriptsize}
+\end{tikzpicture}
+\end{document}

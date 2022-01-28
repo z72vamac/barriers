@@ -18,20 +18,19 @@ from copy import copy
 
 class Data(object):
 
-    def __init__(self, data, m, r, modo, tmax, init, show, elim=False, prepro=False, refor=False, pol=False, porc=1, seed=0):
+    def __init__(self, data, m, tmax, init, show = False, r = 5, vC = 1, vD = 3, orig = [50, 50], dest = [50, 50], seed=0):
         self.data = data
         self.m = m
         self.r = r
-        self.modo = modo
         self.tmax = tmax
+        # self.alpha = alpha
         self.init = init
         self.show = show
-        self.elim = elim
-        self.prepro = prepro
-        self.refor = refor
-        self.pol = pol
-        self.porc = porc
-        self.olddata = []
+        self.vC = vC
+        self.vD = vD
+        self.orig = orig
+        self.dest = dest
+        self.grid_list = []
         random.seed(seed)
 
     def generar_elipse(self):
@@ -47,8 +46,8 @@ class Data(object):
     def generar_poligono(self):
         radio = 5*np.random.uniform(self.r-1, self.r)
         centro = np.random.uniform(radio, 100-radio, 2)
-        nV = np.random.randint(3, 10)
-        angulos = np.linspace(0, 2*np.pi, num=nV+1) + 360*np.random.rand()
+        nV = 3
+        angulos = np.linspace(0, 2*np.pi, num=nV) + 360*np.random.rand()
         V = np.stack((centro[0] + radio*np.cos(angulos),
                      centro[1] + radio*np.sin(angulos))).T
         self.data.append(e.Poligono(V))
@@ -59,7 +58,8 @@ class Data(object):
         V = []
         # genero un centro en el cuadrado [0, 100]
         P = np.random.uniform(radio, 100-radio, 2)
-        nV = np.random.randint(2, 6)
+        # nV = np.random.randint(2, 6)
+        nV = 2
 #        nV = 9
         angulo = 360*np.random.rand()  # genero un ángulo aleatorio de giro del segmento
         V.append(P)
@@ -75,8 +75,9 @@ class Data(object):
                              P[1] + radio*np.sin(angulo)])
             V.append(Q)
         alpha = np.random.rand()
-        alpha = 1
         self.data.append(e.Poligonal(V, alpha))
+    
+            
 
     def generar_muestra(self):
         if self.modo == 1:

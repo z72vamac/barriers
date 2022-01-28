@@ -1,0 +1,12 @@
+\section{MINLP Formulations}
+
+In this section it is introduced a Mixed Integer Non-Linear Programming formulation for the problems described in Section \ref{section:description}. Firstly, the formulation for the \SPP is described and then the model \TSP is presented as an extension of the previous problem.
+
+\subsection{A formulation for the \SPP}
+The idea of the \SPP is to solve a shortest path problem in the graph induced by the endpoints of the barriers and the neighborhoods. To describe this graph, we need to introduce the following sets:
+
+\begin{itemize}
+\item $V_S=\{P_S\}$: set that contains the selected point in $N_S$.
+\item $E_S=\{(P_S,P^i_B):B\in\B\text{ and }\overline{P_SP^i_B}\cupB=\emptyset,\:\forall B\in\B,\:i=1,2\}$: set of line segments that are incident with $P_S$ and do not cross any barrier of $\B$.
+\item $V_\B$
+\end{itemize}

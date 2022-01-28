@@ -1,0 +1,6 @@
+\section{Description of the Problem}
+In this section, it is described the two problems that are considered in this paper: the Hampered Shortest Path Problem with Segments \SPP and the Hampered Traveling Salesman Problem with Segments \TSP. 
+
+In \SPP, we have a source neighborhood $n_L\subset\mathbb R^2$, a target neighborhood $n_R\subset\mathbb R^2$ and a set $\mathcal B$ of line segments that plays the role of barriers that the drone cannot cross. The endpoints of $b\in\mathcal B$ are notated by $B_b$ and $B_b'$. It is important to remark that it is assumed that these line segments are opened, i.e., the drone can visit $B_b$ or $B_b'$ for the barrier $b$. The aim of the \SPP is to go from $n_L$ to $n_R$ without crossing any barrier $b\in\mathcal B$.
+
+The \TSP is an extension of the \SPP where a neighborhood set $\mathcal N$ is considered that plays the role of source and target neighborhoods in the \SPP. The aim of the \TSP is to seek the shortest route that visits each neighborhood $n\in\mathcal N$ exactly once and returns to the origin neighborhood without crossing any barrier $b\in\mathcal B$.

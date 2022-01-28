@@ -1,5 +1,3 @@
-
-# Incluimos primero los paquetes
 import gurobipy as gp
 from gurobipy import GRB
 import numpy as np
@@ -9,83 +7,63 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
 from matplotlib.collections import PatchCollection
 from data import *
-from entorno import *
+from entorno import Circulo
 import copy
 import estimacion_M as eM
 from auxiliar_functions import *
 import networkx as nx
+# from HTSPS_with_prepro2 import HTSPS_with_prepro2
+# from HTSPS_with_prepro import HTSPS_with_prepro
+# from HTSPS_with_prepro3 import HTSPS_with_prepro3
+# from HTSPS_with_prepro4 import HTSPS_with_prepro4
+# from HTSPS_new_ven import HTSPS
+from HTSPS_new import HTSPS
+from HSPPS_new import HSPPS
+from HTSPS_new_visible import HTSPS_ven
+
+# from HTSPS_without_prepro import HTSPS_without_prepro
 
 
-np.random.seed(33)
-
-point1 = Punto([5, 50])
-point2 = Punto([95, 50])
-
-datos = Data([], 2, grid = True, tmax = 600, alpha = False, init = True, show = True, mode = 2)
-datos.generar_muestra()
-
-# Creo la lista de vertices
-vertices = []
-
-for c in range(len(datos.data)):
-    for v in range(datos.data[c].num_segmentos):
-        vertices.append(c*10+v)
-
-# print(vertices)
-
-vertices_pos = []
-
-for comp in datos.data:
-    for v in range(len(comp.V)-1):
-        vertices_pos.append(comp.V[v])
-
-# vertices_pos = np.array(vertices_pos)
-# print(vertices_pos)
-
-edges = []
-
-for v in vertices:
-    for w in vertices:
-        if v < w:
-            pol1 = v // 10
-            v1 = v % 10
-
-            pol2 = w // 10
-            v2 = w % 10
-
-            if pol1 == pol2:
-                if v2 - v1 == 1:
-                    edges.append((v, w))
-
-                if v2 - v1 == datos.data[pol1].num_segmentos-1:
-                    edges.append((v, w))
-
-            if pol1 != pol2:
-                if dist_point_point_polygon(datos.data[pol1].V[v1], datos.data[pol1], datos.data[pol2].V[v2], datos.data[pol2]) >= np.linalg.norm(datos.data[pol1].V[v1] - datos.data[pol2].V[v2]) - 0.5:
-                    edges.append((v, w))
+# segments = np.genfromtxt('./instancias/segmentos5-8.csv', delimiter = ',')
+#
+# barriers = []
+# for lista in segments:
+#     barriers.append([[lista[0], lista[1]], [lista[2], lista[3]]])
+#
+# bolas = np.genfromtxt('./instancias/bolas5-8.csv', delimiter = ',')
+# N = [Circulo(center = [centro1, centro2], radii = radio) for centro1, centro2, radio in bolas]
+# # segmentos_visitar = np.genfromtxt('./instancias/segmentos_visitar50-8.csv', delimiter = ',')
+# # N = [Poligonal(V = [np.array([lista[0], lista[1]]), np.array([lista[2], lista[3]])]) for lista in segmentos_visitar] # 105.164
+# # resultados = HTSPS(barriers, N, prepro = False, log = True, timeLimit = 30)
+# resultados = HTSPS_ven(barriers, N, prepro = False, log = True, timeLimit = 60)
 
 
-Ar = np.zeros((len(vertices), len(vertices)))
-
-for i, v in zip(range(len(vertices)), vertices):
-    for j, w in zip(range(len(vertices)), vertices):
-        if (v, w) in edges:
-            # print(i, j)
-            Ar[i, j] = 1
-
-grafo = Grafo(vertices_pos, Ar, 1)
-
-fig, ax = plt.subplots()
-plt.axis([0, 100, 0, 100])
+# print(N)
 
 
-for c in datos.data:
-    ax.add_artist(c.artist)
+barrier1 = [[20, 80], [40, 30]]
+barrier2 = [[70, 95], [40, 70]]
+barrier3 = [[95, 60], [60, 70]]
+barrier4 = [[60, 50], [90, 10]]
+barrier5 = [[10, 70], [20, 50]]
+# barrier6 = [[30, 70], [70, 20]]
 
-for comp in datos.data:
-    for v, i in zip(comp.V, range(comp.num_segmentos)):
-        ax.annotate(str(i), xy = (v[0], v[1]))
+barriers = [barrier1, barrier2, barrier3, barrier4, barrier5]
+# barriers = [barrier1, barrier3, barrier4, barrier5]
+# barriers = [barrier1, barrier4]
 
-nx.draw(grafo.G, grafo.pos)
+N1 = Circulo(center=[20, 10], radii=10)
+N2 = Circulo(center=[90, 90], radii=5)
+N3 = Circulo(center=[35, 85], radii=9)
+N4 = Circulo(center=[85, 40], radii=11)
 
-plt.show()
+N = [N1, N2, N3, N4]
+# N = [N1, N4]
+
+resultados = HTSPS(barriers, N, prepro=False, log=1, timeLimit=10)
+
+# resultados = HTSPS_with_prepro(barriers, N, log = 1, timeLimit = 600)
+
+print(resultados)
+
+# HTSPS_with_prepro(barriers, N)

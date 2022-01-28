@@ -1,0 +1,46 @@
+\documentclass[10pt]{article}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.15}
+\usepackage{mathrsfs}
+\usetikzlibrary{arrows}
+\pagestyle{empty}
+\begin{document}
+\definecolor{qqffqq}{rgb}{0,1,0}
+\definecolor{qqqqff}{rgb}{0,0,1}
+\definecolor{ffqqqq}{rgb}{1,0,0}
+\begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1cm,y=1cm]
+\begin{axis}[
+x=1cm,y=1cm,
+axis lines=middle,
+ymajorgrids=true,
+xmajorgrids=true,
+xmin=-30.53772939574263,
+xmax=159.53639158056973,
+ymin=-29.679586779798747,
+ymax=116.68410916363342,
+xtick={-30,-20,...,150},
+ytick={-20,-10,...,110},]
+\clip(-30.53772939574263,-29.679586779798747) rectangle (159.53639158056973,116.68410916363342);
+\fill[line width=2pt] (0,100) -- (100,100) -- (100,0) -- (0,0) -- cycle;
+\draw [line width=2pt,color=ffqqqq] (20,80)-- (40,30);
+\draw [line width=2pt,color=ffqqqq] (70,100)-- (40,70);
+\draw [line width=2pt,color=ffqqqq] (100,60)-- (60,70);
+\draw [line width=2pt,color=ffqqqq] (60,50)-- (90,10);
+\draw [line width=2pt,color=ffqqqq] (10,60)-- (20,50);
+\draw [rotate around={0:(20,10)},line width=2pt,color=qqqqff,fill=qqqqff,fill opacity=0.25] (20,10) ellipse (10cm and 10cm);
+\draw [rotate around={0:(90,90)},line width=2pt,color=qqffqq,fill=qqffqq,fill opacity=0.25] (90,90) ellipse (5cm and 5cm);
+\begin{scriptsize}
+\draw [color=ffqqqq] (20,80) circle (2.5pt);
+\draw [color=ffqqqq] (40,30) circle (2.5pt);
+\draw [color=ffqqqq] (70,100) circle (2.5pt);
+\draw [color=ffqqqq] (40,70) circle (2.5pt);
+\draw [color=ffqqqq] (100,60) circle (2.5pt);
+\draw [color=ffqqqq] (60,70) circle (2.5pt);
+\draw [color=ffqqqq] (60,50) circle (2.5pt);
+\draw [color=ffqqqq] (90,10) circle (2.5pt);
+\draw [color=ffqqqq] (10,60) circle (2.5pt);
+\draw [color=ffqqqq] (20,50) circle (2.5pt);
+\end{scriptsize}
+\end{axis}
+\end{tikzpicture}
+\end{document}

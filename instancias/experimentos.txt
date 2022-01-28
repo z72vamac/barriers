@@ -1,0 +1,12 @@
+10 Instancias de tamaño 5 a 80 de 5 en 5. Numero de barreras variable (pues depende de la configuración se necesitan
+más o menos).
+
+Modelo sin y con preprocesado.
+
+Tiempo límite: 1 h.
+
+
+5, 10, 20, 30, 50, 80
+
+Duración de las pruebas: 10 x 16 x 1 = 160 (2 procesos) -> 80 horas sin preprocesado, 80 h con preprocesado
+(si utilizo las dos máquinas virtuales, 80h en total como maximo)

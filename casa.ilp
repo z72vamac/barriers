@@ -1,0 +1,17 @@
+\ Model HSPPS_Model_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ R28946: 16.9181812759798 alpha_1[-15,3,1,23,0]
+   - 82.19998826597669 P[-15,0,0] + 16.03774166338677 P[-15,0,1] <= 0
+ R33984: - 100 P[-15,0,1] <= -10000
+ R44735: 124.1060821722149 alpha_1[-15,2,1,7,1]
+   + 70.44916497128952 P[-15,0,0] + 87.69849447540663 P[-15,0,1]
+   <= 8769.849447540664
+Bounds
+ P[-15,0,0] free
+ P[-15,0,1] free
+Binaries
+ alpha_1[-15,3,1,23,0] alpha_1[-15,2,1,7,1]
+End

@@ -53,12 +53,21 @@ class Elipse(object):
         self.artist = mpatches.Ellipse(
             self.centro, self.width, self.height, alpha=0.1)
 
+class Circulo(object):
+    def __init__(self, center, radii):
+        self.center = center
+        self.radii = radii
+        
+        self.artist = mpatches.Ellipse(self.center, 2*self.radii, 2*self.radii, color = 'blue', alpha = 0.5)
+        
+    
+        
 class Punto(object):
     def __init__(self, V):
         self.V = V
 
 class Poligono(object):
-    def __init__(self, V):
+    def __init__(self, V, col = 'red'):
         """
         Poligono representado como envolvente convexa de sus vértices
         V: Conjunto de vértices del Poligono
@@ -77,11 +86,11 @@ class Poligono(object):
 
         for s in V:
             self.path.append(s)
-        self.artist = mpatches.Polygon(self.path, fill = True, color = 'gray', alpha = 0.3, facecolor=None)
+        self.artist = mpatches.Polygon(self.path, fill = True, color = col, lw = 2, alpha = 1, facecolor=None)
 
 
 class Poligonal(object):
-    def __init__(self, V, alpha):
+    def __init__(self, V, alpha = 1):
         """
         V: Conjunto de vértices de la Poligonal
         alpha: porcentaje deseado de recorrido de la poligonal
@@ -98,9 +107,9 @@ class Poligonal(object):
         self.longitud = sum(self.longitudes)
 
         # self.artist = mlines.Line2D([self.V[i][0] for i in range(self.num_puntos)], [
-        #                               self.V[i][1] for i in range(self.num_puntos)], color='k', alpha=0.1)
-        self.artist = mpatches.Polygon(
-                V, fill = False, facecolor=None)
+        #                          self.V[i][1] for i in range(self.num_puntos)], color='k', alpha=0.1)        
+        self.artist = mpatches.Polygon(V, closed = False, fill = False, facecolor=None)
+            
 
 class Grafo(object):
     def __init__(self, V, A, alpha):

@@ -1,0 +1,63 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+%\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{mathtools,amssymb}
+\usepackage{subfigure}
+\usepackage{enumitem}
+\usepackage{optidef}
+\usepackage{xcolor}
+\usepackage{amsthm}
+\usepackage{comment}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{mathrsfs}
+\usepackage[ruled]{algorithm2e}
+\usepackage{ulem}
+\usepackage{threeparttable}
+\usepackage[margin=0.65in]{geometry}
+
+\usepackage[utf8]{inputenc}
+
+\title{The Traveling Postman Problem with Linear Barriers}
+\author{carlosvalverdemartin }
+\date{February 2021}
+
+\newcommand{\SPP}{{\sf{H-SPP-S} \xspace}}
+\newcommand{\TSP}{{\sf{H-TSP-S} \xspace}}
+
+\begin{document}
+\section{Description of the Problem}
+In this section, it is described the two problems that are considered in this paper: the Hampered Shortest Path Problem with Segments \SPP and the Hampered Traveling Salesman Problem with Segments \TSP. 
+
+%In \SPP, we have a source neighborhood $N_S\subset\mathbb R^2$ and a target neighborhood $N_T\subset\mathbb R^2$, that we assume to be convex sets and a set $\mathcal B$ of opened line segments located in general position that plays the role of barriers that the drone cannot cross, i.e., the drone can visit the endpoints of these barriers but it cannot be located in the interior points of the barriers. Note that, it is rational to assume that if there are two barriers that have a portion of them in common, it is only considered the smallest line segment that contains both barriers. The aim of the \SPP is to find the best pair of points $(P_{S}, P_{T})\in N_S\times N_T$ in the source and target neighborhoods that minimize the length of the path that joins both points without crossing any barrier of $\mathcal B$. In this problem, it is implicitly assumed that there is not a rectilinear path to go from $N_S$ to $N_T$, otherwise, the problem becomes straightforward and the solution is the minimum distance between both neighborhoods. 
+In \SPP, we have a source neighborhood $N_S\subset\mathbb R^2$ and a target neighborhood $N_T\subset\mathbb R^2$, that we assume to be convex sets and a set $\mathcal B$ of line segments that plays the role of barriers that the drone cannot cross. In this model we state the following assumptions:
+
+\begin{enumerate}[label=\textbf{A\arabic*},ref=\textbf{A\arabic*}]
+\item \label{A1}The line segments of $\mathcal B$ are located in general position, i.e., the endpoints of these segments are not aligned. Although it is possible to model the most general case, it is beyond of the scope of this paper.
+\item The line segments of $\mathcal B$ are opened, that is, it is possible that the drone visits the endpoints of the segments, but it cannot be located in the interior points of them. Otherwise, we can take a small quantity to enlarge these segments to make them opened.
+\item If there are two barriers that have a common portion of them, it is only considered the smallest line segment that contains both barriers.
+\item \label{A4}There is not a rectilinear path to go from $N_S$ to $N_T$. Otherwise, the problem becomes straightforward and the solution is the minimum distance between both neighborhoods.
+\end{enumerate}
+
+The aim of the \SPP is to find the best pair of points $(P_{S}, P_{T})\in N_S\times N_T$ in the source and target neighborhoods that minimize the length of the path that joins both points without crossing any barrier of $\mathcal B$ by assuming \ref{A1}-\ref{A4}.
+
+
+%It is important to remark that it is assumed that these line segments are opened, i.e., the drone can visit $B_b$ or $B_b'$ for the barrier $b$. 
+%
+%The endpoints of $b\in\mathcal B$ are notated by $B_b$ and $B_b'$.
+
+The \TSP is an extension of the \SPP where a neighborhood set $\mathcal N$ is considered that plays the role of source and target neighborhoods in the \SPP. The aim of the \TSP is to seek the shortest tour that visits each neighborhood $N\in\mathcal N$ exactly once without crossing any barrier $B\in\mathcal B$ by assuming again \ref{A1}-\ref{A4}.
+
+The Figure \ref{fig:initialdata} shows an example of the problem that are being solved. In the left picture, the blue neighborhood represents the source, the green one, representing the \SPP, the target and the red line segments show the barriers that the drone can not cross. In the right picture, an instance of the \TSP is shown, where the neighborhood are balls and the barriers are, again, the red line segments.
+
+\input{figures/Example_ H-SPP-S_ First Figure}
+
+%\input{figures/Example_ H-TSP-S_ First Figure}
+
+\end{document}

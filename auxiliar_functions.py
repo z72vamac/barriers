@@ -3,7 +3,7 @@
 import numpy as np
 import gurobipy as gp
 from gurobipy import GRB
-from entorno import Elipse, Poligono, Poligonal
+from entorno import Elipse, Poligono, Poligonal, Circulo
 import estimacion_M as eM
 import copy
 import matplotlib.pyplot as plt
@@ -231,10 +231,12 @@ def min_dist(comp0, comp1):
                 for j in range(2):
                     MODEL.addConstr(x1[j] == gp.quicksum(sublanda1[punto] * comp1.V[punto][j] for punto in range(comp1.num_puntos)), name='seg1')
 
-        MODEL.setParam('OutputFlag', 1)
+        # MODEL.setParam('OutputFlag', 1)
 
         MODEL.setObjective(d01, GRB.MINIMIZE)
-        MODEL.Params.FeasibilityTol = 1e-2
+        # MODEL.Params.FeasibilityTol = 1e-2
+        MODEL.Params.OutputFlag = 0
+
         MODEL.update()
 
         MODEL.optimize()
@@ -243,1745 +245,6 @@ def min_dist(comp0, comp1):
         x_1 = [x1[0].X, x1[1].X]
 
         return d01.X, x_0, x_1
-
-def XPPND(datos, vals_xL, grafo, vals_xR):
-
-    MODEL = gp.Model('XPPND')
-    ugi_index = []
-
-    for i in grafo.aristas:
-        ugi_index.append(i)
-
-
-    ugi = MODEL.addVars(ugi_index, vtype=GRB.BINARY, name='ugi')
-
-    # Variable continua no negativa dgLi que indica la distancia desde el punto de lanzamiento hasta el segmento
-    # sgi.
-    dgLi_index = ugi_index
-
-    dgLi = MODEL.addVars(dgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgLi')
-    auxgLi = MODEL.addVars(dgLi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgLi')
-
-    # Variable continua no negativa pgLi = ugi * dgLi
-    pgLi_index = ugi_index
-
-    pgLi = MODEL.addVars(pgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgLi')
-
-
-    # Variable binaria vgi = 1 si en la etapa t salimos por el segmento sgi
-    vgi_index = ugi_index
-
-    vgi = MODEL.addVars(vgi_index, vtype=GRB.BINARY, name='vgi')
-
-    # Variable continua no negativa dgRi que indica la distancia desde el punto de salida del segmento sgi hasta el
-    # punto de recogida del camion
-    dgRi_index = ugi_index
-
-    dgRi = MODEL.addVars(dgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgRi')
-    auxgRi = MODEL.addVars(dgRi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgRi')
-
-
-    # Variable continua no negativa pgRi = vgi * dgRi
-    pgRi_index = ugi_index
-
-    pgRi = MODEL.addVars(pgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgRi')
-
-
-    # Variable binaria zgij = 1 si voy del segmento i al segmento j del grafo g.
-    zgij_index = []
-    sgi_index = []
-
-    for i in grafo.aristas:
-        sgi_index.append(i)
-        for j in grafo.aristas:
-            if i != j:
-                zgij_index.append((i, j))
-
-    zgij = MODEL.addVars(zgij_index, vtype=GRB.BINARY, name='zgij')
-    sgi = MODEL.addVars(sgi_index, vtype=GRB.CONTINUOUS, lb=0, name='sgi')
-
-    # Variable continua no negativa dgij que indica la distancia entre los segmentos i j en el grafo g.
-    dgij_index = zgij_index
-
-    dgij = MODEL.addVars(dgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-    auxgij = MODEL.addVars(
-        dgij_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-
-    # Variable continua no negativa pgij = zgij * dgij
-    pgij_index = zgij_index
-
-    pgij = MODEL.addVars(pgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgij')
-    # Rgi: punto de recogida del dron para el segmento sgi
-    Rgi_index = []
-    rhogi_index = []
-
-    for i in grafo.aristas:
-        rhogi_index.append(i)
-        for dim in range(2):
-            Rgi_index.append((i, dim))
-
-    Rgi = MODEL.addVars(Rgi_index, vtype=GRB.CONTINUOUS, name='Rgi')
-    rhogi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='rhogi')
-
-    # Lgi: punto de lanzamiento del dron del segmento sgi
-    Lgi_index = Rgi_index
-    landagi_index = rhogi_index
-
-    Lgi = MODEL.addVars(Lgi_index, vtype=GRB.CONTINUOUS, name='Lgi')
-    landagi = MODEL.addVars(landagi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='landagi')
-
-    # Variables auxiliares para modelar el valor absoluto
-    mingi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='mingi')
-    maxgi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='maxgi')
-    entrygi = MODEL.addVars(rhogi_index, vtype=GRB.BINARY, name='entrygi')
-    mugi = MODEL.addVars(rhogi_index, vtype = GRB.BINARY, name = 'mugi')
-    pgi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'pgi')
-    alphagi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'alphagi')
-
-    xL = MODEL.addVars(2, vtype = GRB.CONTINUOUS, name = 'xL')
-    difL = MODEL.addVars(2, vtype = GRB.CONTINUOUS, name = 'difL')
-
-    xR = MODEL.addVars(2, vtype = GRB.CONTINUOUS, name = 'xR')
-    difR = MODEL.addVars(2, vtype = GRB.CONTINUOUS, name = 'difR')
-
-    # Distancia del punto de lanzamiento al punto de recogida
-    dLR = MODEL.addVar(vtype = GRB.CONTINUOUS, lb = 0.0, name = 'dLR')
-    auxLR = MODEL.addVars(2, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'difLR')
-
-    # Para cada grafo g, existe un segmento i y una etapa t donde hay que recoger al dron
-    MODEL.addConstr((ugi.sum('*') == 1), name = 'entrag')
-    MODEL.addConstr((vgi.sum('*') == 1), name = 'saleg')
-
-    # MODEL.addConstrs(ugi.sum('*', i, '*') == 1 for i in range(nG))
-    # MODEL.addConstrs(vgi.sum('*', i, '*') == 1 for g in range(nG))
-
-    # De todos los segmentos hay que salir y entrar menos de aquel que se toma como entrada al grafo y como salida del grafo
-    MODEL.addConstrs((mugi[i] - ugi[i] == zgij.sum('*', i) for i, j in zgij.keys()), name = 'flujou')
-    MODEL.addConstrs((mugi[i] - vgi[i] == zgij.sum(i, '*') for i, j in zgij.keys()), name = 'flujov')
-
-    MODEL.addConstrs((pgi[i] >= mugi[i] + alphagi[i] - 1 for i in rhogi.keys()), name = 'pgi1')
-    MODEL.addConstrs((pgi[i] <= mugi[i] for i in rhogi.keys()), name = 'pgi2')
-    MODEL.addConstrs((pgi[i] <= alphagi[i] for i in rhogi.keys()), name = 'pgi3')
-
-    # MODEL.addConstr(ugi[0, 101, 0] == 0)
-    # MODEL.addConstr(ugi[0, 101, 1] == 0)
-
-
-    # Eliminaci贸n de subtours
-    for i in grafo.aristas[0:]:
-        for j in grafo.aristas[0:]:
-            if i != j:
-                MODEL.addConstr(grafo.num_aristas - 1 >= (sgi[i] - sgi[j]) + grafo.num_aristas * zgij[i, j])
-
-    # for g in range(nG):
-    #     MODEL.addConstr(sgi[grafos[g].aristas[0]] == 0)
-
-    for i in grafo.aristas[0:]:
-        MODEL.addConstr(sgi[i] >= 0)
-        MODEL.addConstr(sgi[i] <= grafo.num_aristas - 1)
-
-
-    # Restricciones de distancias y producto
-    MODEL.addConstrs((auxgLi[i, dim] >=   xL[dim] - Rgi[i, dim]) for i, dim in auxgLi.keys())
-    MODEL.addConstrs((auxgLi[i, dim] >= - xL[dim] + Rgi[i, dim]) for i, dim in auxgLi.keys())
-
-    MODEL.addConstrs((auxgLi[i, 0]*auxgLi[i, 0] + auxgLi[i, 1] * auxgLi[i, 1] <= dgLi[i] * dgLi[i] for i in ugi.keys()), name = 'u-conic')
-
-    SmallML = dist_grafo(vals_xL, grafo)[0]
-    BigML = max([np.linalg.norm(vals_xL - v) for v in grafo.V])
-
-    MODEL.addConstrs((pgLi[i] >= SmallML * ugi[i]) for i in ugi.keys())
-    MODEL.addConstrs((pgLi[i] >= dgLi[i] - BigML * (1 - ugi[i])) for i in ugi.keys())
-
-    MODEL.addConstrs((auxgij[i, j, dim] >=   Lgi[i, dim] - Rgi[j, dim]) for i, j, dim in auxgij.keys())
-    MODEL.addConstrs((auxgij[i, j, dim] >= - Lgi[i, dim] + Rgi[j, dim]) for i, j, dim in auxgij.keys())
-
-    MODEL.addConstrs((auxgij[i, j, 0]*auxgij[i, j, 0] + auxgij[i, j, 1] * auxgij[i, j, 1] <= dgij[i, j] * dgij[i, j] for i, j in dgij.keys()), name = 'zgij-conic')
-
-
-    for i, j in zgij.keys():
-        first_i = i // 100 - 1
-        second_i = i % 100
-        first_j = j // 100 - 1
-        second_j = j % 100
-
-        segm_i = Poligonal(np.array([[grafo.V[first_i, 0], grafo.V[first_i, 1]], [
-                           grafo.V[second_i, 0], grafo.V[second_i, 1]]]), grafo.A[first_i, second_i])
-        segm_j = Poligonal(np.array([[grafo.V[first_j, 0], grafo.V[first_j, 1]], [
-                           grafo.V[second_j, 0], grafo.V[second_j, 1]]]), grafo.A[first_j, second_j])
-
-        BigM_local = eM.estima_BigM_local(segm_i, segm_j)
-        SmallM_local = eM.estima_SmallM_local(segm_i, segm_j)
-        MODEL.addConstr((pgij[i, j] >= SmallM_local * zgij[i, j]))
-        MODEL.addConstr((pgij[i, j] >= dgij[i, j] - BigM_local * (1 - zgij[i, j])))
-
-
-    SmallMR = dist_grafo(vals_xR, grafo)[0]
-    BigMR = max([np.linalg.norm(vals_xR - v) for v in grafo.V])
-
-    MODEL.addConstrs((pgRi[i] >= SmallMR * vgi[i]) for i in vgi.keys())
-    MODEL.addConstrs((pgRi[i] >= dgRi[i] - BigMR * (1 - vgi[i])) for i in vgi.keys())
-
-    MODEL.addConstrs((auxgRi[i, dim] >=   Lgi[i, dim] - xR[dim]) for i, dim in auxgRi.keys())
-    MODEL.addConstrs((auxgRi[i, dim] >= - Lgi[i, dim] + xR[dim]) for i, dim in auxgRi.keys())
-
-    MODEL.addConstrs((auxgRi[i, 0]*auxgRi[i, 0] + auxgRi[i, 1] * auxgRi[i, 1] <= dgRi[i] * dgRi[i] for i in vgi.keys()), name = 'v-conic')
-
-
-    for i in rhogi.keys():
-        first = i // 100 - 1
-        second = i % 100
-        MODEL.addConstr(rhogi[i] - landagi[i] == maxgi[i] - mingi[i])
-        MODEL.addConstr(maxgi[i] + mingi[i] == alphagi[i])
-        if datos.alpha:
-            MODEL.addConstr(pgi[i] == grafo.A[first, second])
-        MODEL.addConstr(maxgi[i] <= 1 - entrygi[i])
-        MODEL.addConstr(mingi[i] <= entrygi[i])
-        MODEL.addConstr(Rgi[i, 0] == rhogi[i] * grafo.V[first, 0] + (1 - rhogi[i]) * grafo.V[second, 0])
-        MODEL.addConstr(Rgi[i, 1] == rhogi[i] * grafo.V[first, 1] + (1 - rhogi[i]) * grafo.V[second, 1])
-        MODEL.addConstr(Lgi[i, 0] == landagi[i] * grafo.V[first, 0] + (1 - landagi[i]) * grafo.V[second, 0])
-        MODEL.addConstr(Lgi[i, 1] == landagi[i] * grafo.V[first, 1] + (1 - landagi[i]) * grafo.V[second, 1])
-
-
-    if not(datos.alpha):
-        for g in T_index_prima:
-            MODEL.addConstr(gp.quicksum(pgi[i]*grafo.longaristas[i // 100 - 1, i % 100] for i in grafo.aristas) >= grafo.alpha*grafo.longitud)
-
-    MODEL.addConstrs(xL[dim] ==  vals_xL[dim] for dim in range(2))
-    MODEL.addConstrs(xR[dim] ==  vals_xR[dim] for dim in range(2))
-
-    MODEL.addConstrs((auxLR[dim] >=   xL[dim] - xR[dim]) for dim in auxLR.keys())
-    MODEL.addConstrs((auxLR[dim] >= - xL[dim] + xR[dim]) for dim in auxLR.keys())
-    MODEL.addConstr((auxLR[0]*auxLR[0] + auxLR[1] * auxLR[1] <= dLR * dLR), name = 'LR-conic')
-
-    MODEL.update()
-
-    objective = gp.quicksum(pgLi[i] + pgRi[i] for i in pgRi.keys()) + gp.quicksum(pgij[i, j] for i, j in pgij.keys()) + gp.quicksum(pgi[i]*grafo.longaristas[i // 100 - 1, i % 100] for i in grafo.aristas)
-
-    MODEL.setObjective(objective, GRB.MINIMIZE)
-
-    MODEL.update()
-
-    MODEL.setParam('OutputFlag', 0)
-
-    MODEL.optimize()
-
-    vals_u = MODEL.getAttr('x', ugi)
-    selected_u = gp.tuplelist(i for i in vals_u.keys() if vals_u[i] > 0.5)
-    #print(selected_u)
-
-    vals_zgij = MODEL.getAttr('x', zgij)
-    selected_zgij = gp.tuplelist((i, j) for i, j in vals_zgij.keys() if vals_zgij[i, j] > 0.5)
-    #print(selected_zgij)
-
-    vals_v = MODEL.getAttr('x', vgi)
-    #selected_v = gp.tuplelist(i for i in vals_v.keys() if vals_v[i] > 0.5)
-    #print(selected_v)
-
-    vals_xL = MODEL.getAttr('x', xL)
-    vals_xR = MODEL.getAttr('x', xR)
-    #print(vals_xL)
-
-    index_i = selected_u[0]
-    unvisited = grafo.aristas.copy()
-    cycle = []
-    unvisited.remove(index_i)
-    cycle.append(index_i)
-
-    while unvisited:
-        neighbors = [tupla for tupla in selected_zgij if tupla[0] == index_i]
-        while neighbors:
-            current = neighbors[0][1]
-            cycle.append(current)
-            unvisited.remove(current)
-            neighbors = [(i, j) for i, j in selected_zgij if i == current or j == current and j in unvisited]
-
-    # #print(cycle)
-
-
-    return vals_u, vals_zgij, vals_v, MODEL.ObjVal
-
-def XPPNM(datos, vals_u, vals_zgij, vals_v, vals_z, orig, dest, iter):
-
-    grafos = datos.mostrar_datos()
-
-    nG = len(grafos)
-
-    T_index = range(nG + 2)
-    T_index_prima = range(1, nG+1)
-    T_index_primaprima = range(nG+1)
-
-    origin = orig
-    dest = orig
-
-    vD = 3
-
-    vC = 1
-
-    MODEL = gp.Model('XPPNM')
-
-    ugi_index = []
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            ugi_index.append((g, i))
-    #
-    #
-    # ugi = MODEL.addVars(ugi_index, vtype=GRB.BINARY, name='ugi')
-
-    # Variable continua no negativa dgLi que indica la distancia desde el punto de lanzamiento hasta el segmento
-    # sgi.
-    dgLi_index = ugi_index
-
-    dgLi = MODEL.addVars(dgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgLi')
-    auxgLi = MODEL.addVars(dgLi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgLi')
-
-    # # Variable continua no negativa pgLi = ugi * dgLi
-    # pgLi_index = ugi_index
-    #
-    # pgLi = MODEL.addVars(pgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgLi')
-
-
-    # # Variable binaria vgi = 1 si en la etapa t salimos por el segmento sgi
-    # vgi_index = ugi_index
-    #
-    # vgi = MODEL.addVars(vgi_index, vtype=GRB.BINARY, name='vgi')
-
-    # Variable continua no negativa dgRi que indica la distancia desde el punto de salida del segmento sgi hasta el
-    # punto de recogida del camion
-    dgRi_index = ugi_index
-
-    dgRi = MODEL.addVars(dgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgRi')
-    auxgRi = MODEL.addVars(dgRi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgRi')
-
-
-    # Variable continua no negativa pgRi = vgi * dgRi
-    # pgRi_index = ugi_index
-    #
-    # pgRi = MODEL.addVars(pgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgRi')
-
-
-    # # Variable binaria zgij = 1 si voy del segmento i al segmento j del grafo g.
-    zgij_index = []
-    sgi_index = []
-    #
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            sgi_index.append((g, i))
-            for j in grafos[g-1].aristas:
-                if i != j:
-                    zgij_index.append((g, i, j))
-    #
-    #
-    # zgij = MODEL.addVars(zgij_index, vtype=GRB.BINARY, name='zgij')
-    # sgi = MODEL.addVars(sgi_index, vtype=GRB.CONTINUOUS, lb=0, name='sgi')
-
-    # Variable continua no negativa dgij que indica la distancia entre los segmentos i j en el grafo g.
-    dgij_index = zgij_index
-
-    dgij = MODEL.addVars(dgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-    auxgij = MODEL.addVars(
-        dgij_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-
-    # Variable continua no negativa pgij = zgij * dgij
-    pgij_index = zgij_index
-
-    pgij = MODEL.addVars(pgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgij')
-
-    # Distancia del punto de lanzamiento al punto de recogida
-    dLR = MODEL.addVars(T_index_prima, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'dLR')
-    auxLR = MODEL.addVars(T_index_prima, 2, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'difLR')
-
-    # Variable binaria z que vale uno si se va del grafo g al grafo g'
-    z_index = []
-
-    for v in T_index:
-        for w in T_index:
-            if v != w:
-                z_index.append((v, w))
-
-    # z = MODEL.addVars(z_index, vtype=GRB.BINARY, name='z')
-    s = MODEL.addVars(T_index, vtype=GRB.CONTINUOUS, lb=0, name='s')
-
-    dRL = MODEL.addVars(z_index, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'dRL')
-    auxRL = MODEL.addVars(z_index, 2, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'difRL')
-    pRL = MODEL.addVars(z_index, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'pRL')
-
-    # Variables que modelan los puntos de entrada o recogida
-    # xL: punto de salida del dron del camion en la etapa t
-    xL_index = []
-
-    for g in T_index:
-        for dim in range(2):
-            xL_index.append((g, dim))
-
-    xL = MODEL.addVars(xL_index, vtype=GRB.CONTINUOUS, name='xL')
-
-    # xR: punto de recogida del dron del camion en la etapa t
-    xR_index = []
-
-    for t in T_index:
-        for dim in range(2):
-            xR_index.append((t, dim))
-
-    xR = MODEL.addVars(xR_index, vtype=GRB.CONTINUOUS, name='xR')
-
-    # Rgi: punto de recogida del dron para el segmento sgi
-    Rgi_index = []
-    rhogi_index = []
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            rhogi_index.append((g, i))
-            for dim in range(2):
-                Rgi_index.append((g, i, dim))
-
-    Rgi = MODEL.addVars(Rgi_index, vtype=GRB.CONTINUOUS, name='Rgi')
-    rhogi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='rhogi')
-
-    # Lgi: punto de lanzamiento del dron del segmento sgi
-    Lgi_index = Rgi_index
-    landagi_index = rhogi_index
-
-    Lgi = MODEL.addVars(Lgi_index, vtype=GRB.CONTINUOUS, name='Lgi')
-    landagi = MODEL.addVars(landagi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='landagi')
-
-    # Variables auxiliares para modelar el valor absoluto
-    mingi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='mingi')
-    maxgi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='maxgi')
-    entrygi = MODEL.addVars(rhogi_index, vtype=GRB.BINARY, name='entrygi')
-    mugi = MODEL.addVars(rhogi_index, vtype = GRB.BINARY, name = 'mugi')
-    pgi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'pgi')
-    alphagi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'alphagi')
-
-    difL = MODEL.addVars(T_index, 2, vtype = GRB.CONTINUOUS, name = 'difL')
-
-    difR = MODEL.addVars(T_index, 2, vtype = GRB.CONTINUOUS, name = 'difR')
-
-    MODEL.update()
-
-    # for g1, g2 in dRL.keys():
-    #     z[g1, g2].start = zs[g1, g2]
-    # # Para cada grafo g, existe un segmento i y una etapa t donde hay que recoger al dron
-    # MODEL.addConstrs((ugi.sum(g, '*') == 1 for g in T_index_prima), name = 'entrag')
-    # MODEL.addConstrs((vgi.sum(g, '*') == 1 for g in T_index_prima), name = 'saleg')
-
-    # MODEL.addConstrs(ugi.sum('*', i, '*') == 1 for i in range(nG))
-    # MODEL.addConstrs(vgi.sum('*', i, '*') == 1 for g in range(nG))
-
-    # De todos los segmentos hay que salir y entrar menos de aquel que se toma como entrada al grafo y como salida del grafo
-    # MODEL.addConstrs((mugi[g, i] - ugi[g, i] == zgij.sum(g, '*', i) for g, i, j in zgij.keys()), name = 'flujou')
-    # MODEL.addConstrs((mugi[g, i] - vgi[g, i] == zgij.sum(g, i, '*') for g, i, j in zgij.keys()), name = 'flujov')
-
-    MODEL.addConstrs((pgi[g, i] >= mugi[g, i] + alphagi[g, i] - 1 for g, i in rhogi.keys()), name = 'pgi1')
-    MODEL.addConstrs((pgi[g, i] <= mugi[g, i] for g, i in rhogi.keys()), name = 'pgi2')
-    MODEL.addConstrs((pgi[g, i] <= alphagi[g, i] for g, i in rhogi.keys()), name = 'pgi3')
-
-
-    # # Eliminaci贸n de subtours
-    # for g in T_index_prima:
-    #     for i in grafos[g-1].aristas[0:]:
-    #         for j in grafos[g-1].aristas[0:]:
-    #             if i != j:
-    #                 MODEL.addConstr(grafos[g-1].num_aristas - 1 >= (sgi[g, i] - sgi[g, j]) + grafos[g-1].num_aristas * zgij[g, i, j])
-
-
-    # for g in T_index_prima:
-    #     for i in grafos[g-1].aristas[0:]:
-    #         MODEL.addConstr(sgi[g, i] >= 0)
-    #         MODEL.addConstr(sgi[g, i] <= grafos[g-1].num_aristas - 1)
-
-
-    # Restricciones de distancias y producto
-    MODEL.addConstrs((auxgLi[g, i, dim] >=   xL[g, dim] - Rgi[g, i, dim]) for g, i, dim in auxgLi.keys())
-    MODEL.addConstrs((auxgLi[g, i, dim] >= - xL[g, dim] + Rgi[g, i, dim]) for g, i, dim in auxgLi.keys())
-
-    MODEL.addConstrs((auxgLi[g, i, 0]*auxgLi[g, i, 0] + auxgLi[g, i, 1] * auxgLi[g, i, 1] <= dgLi[g, i] * dgLi[g, i] for g, i in dgLi.keys()), name = 'u-conic')
-
-    # SmallM = []
-    # BigM = []
-    #
-    # for g in T_index_prima:
-    #     BigM.append(max([np.linalg.norm(elipses[g-1].centro - v) for v in grafos[g-1].V]) + elipses[g].radio)
-    #     SmallM.append(dist_grafo(elipses[g-1].centro, grafos[g-1])[0] - elipses[g-1].radio)
-
-    # MODEL.addConstrs((pgLi[g, i] >= SmallM[g] * ugi[g, i]) for g, i in ugi.keys())
-    # MODEL.addConstrs((pgLi[g, i] >= dgLi[g, i] - BigM[g] * (1 - ugi[g, i])) for g, i in ugi.keys())
-
-    MODEL.addConstrs((auxgij[g, i, j, dim] >=   Lgi[g, i, dim] - Rgi[g, j, dim]) for g, i, j, dim in auxgij.keys())
-    MODEL.addConstrs((auxgij[g, i, j, dim] >= - Lgi[g, i, dim] + Rgi[g, j, dim]) for g, i, j, dim in auxgij.keys())
-
-    MODEL.addConstrs((auxgij[g, i, j, 0]*auxgij[g, i, j, 0] + auxgij[g, i, j, 1] * auxgij[g, i, j, 1] <= dgij[g, i, j] * dgij[g, i, j] for g, i, j in dgij.keys()), name = 'zgij-conic')
-
-
-    # for g, i, j in zgij.keys():
-    #     first_i = i // 100 - 1
-    #     second_i = i % 100
-    #     first_j = j // 100 - 1
-    #     second_j = j % 100
-    #
-    #     segm_i = Poligonal(np.array([[grafos[g-1].V[first_i, 0], grafos[g-1].V[first_i, 1]], [
-    #                        grafos[g-1].V[second_i, 0], grafos[g-1].V[second_i, 1]]]), grafos[g-1].A[first_i, second_i])
-    #     segm_j = Poligonal(np.array([[grafos[g-1].V[first_j, 0], grafos[g-1].V[first_j, 1]], [
-    #                        grafos[g-1].V[second_j, 0], grafos[g-1].V[second_j, 1]]]), grafos[g-1].A[first_j, second_j])
-    #
-    #     BigM_local = eM.estima_BigM_local(segm_i, segm_j)
-    #     SmallM_local = eM.estima_SmallM_local(segm_i, segm_j)
-    #     MODEL.addConstr((pgij[g, i, j] >= SmallM_local * zgij[g, i, j]))
-    #     MODEL.addConstr((pgij[g, i, j] >= dgij[g, i, j] - BigM_local * (1 - zgij[g, i, j])))
-
-    MODEL.addConstrs((auxgRi[g, i, dim] >=   Lgi[g, i, dim] - xR[g, dim]) for g, i, dim in auxgRi.keys())
-    MODEL.addConstrs((auxgRi[g, i, dim] >= - Lgi[g, i, dim] + xR[g, dim]) for g, i, dim in auxgRi.keys())
-
-    MODEL.addConstrs((auxgRi[g, i, 0]*auxgRi[g, i, 0] + auxgRi[g, i, 1] * auxgRi[g, i, 1] <= dgRi[g, i] * dgRi[g, i] for g, i in dgRi.keys()), name = 'v-conic')
-
-
-    # SmallM = 0
-    #BigM = 10000
-    # SmallM = []
-    # BigM = []
-    #
-    # for g in T_index_prima:
-    #     BigM.append(max([np.linalg.norm(elipses[g].centro - v) for v in grafos[g-1].V]) + elipses[g].radio)
-    #     SmallM.append(dist_grafo(elipses[g].centro, grafos[g-1])[0] - elipses[g].radio)
-
-    # MODEL.addConstrs((pgRi[g, i] >= SmallM[g] * vgi[g, i]) for g, i in vgi.keys())
-    # MODEL.addConstrs((pgRi[g, i] >= dgRi[g, i] - BigM[g] * (1 - vgi[g, i])) for g, i in vgi.keys())
-
-    MODEL.addConstrs((auxRL[g1, g2, dim] >=   xR[g1, dim] - xL[g2, dim]) for g1, g2, dim in auxRL.keys())
-    MODEL.addConstrs((auxRL[g1, g2, dim] >= - xR[g1, dim] + xL[g2, dim]) for g1, g2, dim in auxRL.keys())
-    MODEL.addConstrs((auxRL[g1, g2, 0]*auxRL[g1, g2, 0] + auxRL[g1, g2, 1] * auxRL[g1, g2, 1] <= dRL[g1, g2] * dRL[g1, g2] for g1, g2 in dRL.keys()), name = 'RL-conic')
-
-
-
-    SmallM = 0
-    BigM = 10000
-
-    # BigM = 0
-    # for g in T_index_prima:
-    #     for v in grafos[g-1].V:
-    #         BigM = max([np.linalg.norm(origin - v), BigM])
-    # MODEL.addConstrs((pRL[g1, g2] >= SmallM * z[g1, g2] for g1, g2 in z.keys()))
-    # MODEL.addConstrs((pRL[g1, g2] >= dRL[g1, g2] - BigM * (1 - z[g1, g2]) for g1, g2 in z.keys()))
-
-    # SmallM = np.zeros((nG+2, nG+2))
-    # BigM = np.zeros((nG+2, nG+2))
-    # BigM = 10000*np.ones((nG+2, nG+2))
-
-    # for g1, g2 in z.keys():
-    #     BigM[g1, g2] = eM.estima_BigM_local(elipses[g1], elipses[g2])
-    #     SmallM[g1, g2] = eM.estima_SmallM_local(elipses[g1], elipses[g2])
-    #
-    # MODEL.addConstrs((pRL[g1, g2] >= SmallM[g1, g2] * z[g1, g2] for g1, g2 in z.keys()))
-    # MODEL.addConstrs((pRL[g1, g2] >= dRL[g1, g2] - BigM[g1, g2] * (1 - z[g1, g2]) for g1, g2 in z.keys()))
-
-
-
-    # Restricciones para formar un tour
-    # MODEL.addConstr(gp.quicksum(z[v, 0] for v in T_index_prima) == 0)
-    # MODEL.addConstr(gp.quicksum(z[nG+1, w] for w in T_index_prima) == 0)
-    # MODEL.addConstrs(gp.quicksum(z[v , w] for w in T_index if w != v) == 1 for v in T_index)
-    # MODEL.addConstrs(gp.quicksum(z[w , v] for w in T_index if w != v) == 1 for v in T_index)
-
-
-    # Conectividad
-    for v in T_index_prima:
-        for w in T_index_prima:
-            if v != w:
-                MODEL.addConstr(len(T_index) - 1 >= (s[v] - s[w]) + len(T_index) * vals_z[v, w])
-
-    for v in T_index_prima:
-        MODEL.addConstr(s[v] >= 1)
-        MODEL.addConstr(s[v] <= len(T_index) - 1)
-
-    MODEL.addConstr(s[0] == 0)
-    MODEL.addConstr(s[nG + 1] == nG+2)
-
-    MODEL.addConstrs((auxLR[g, dim] >=   xL[g, dim] - xR[g, dim]) for g, dim in auxLR.keys())
-    MODEL.addConstrs((auxLR[g, dim] >= - xL[g, dim] + xR[g, dim]) for g, dim in auxLR.keys())
-    MODEL.addConstrs((auxLR[g, 0]*auxLR[g, 0] + auxLR[g, 1] * auxLR[g, 1] <= dLR[g] * dLR[g] for g in dLR.keys()), name = 'LR-conic')
-
-
-    MODEL.addConstrs( ( gp.quicksum(dgLi[g, i]*vals_u[g, i] for i in grafos[g-1].aristas) + gp.quicksum(dgij[g, i, j]*vals_zgij[g, i, j] for g, i, j in dgij.keys())
-                      + gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for g in T_index_prima for i in grafos[g-1].aristas)
-                      + gp.quicksum(dgRi[g, i]*vals_v[g, i] for i in grafos[g-1].aristas))/vD <= dLR[g]/vC for g in T_index_prima)
-
-
-    for g, i in rhogi.keys():
-        first = i // 100 - 1
-        second = i % 100
-        MODEL.addConstr(rhogi[g, i] - landagi[g, i] == maxgi[g, i] - mingi[g, i])
-        MODEL.addConstr(maxgi[g, i] + mingi[g, i] == alphagi[g, i])
-        if datos.alpha:
-            MODEL.addConstr(pgi[g, i] == grafos[g-1].A[first, second])
-        MODEL.addConstr(maxgi[g, i] <= 1 - entrygi[g, i])
-        MODEL.addConstr(mingi[g, i] <= entrygi[g, i])
-        MODEL.addConstr(Rgi[g, i, 0] == rhogi[g, i] * grafos[g-1].V[first, 0] + (1 - rhogi[g, i]) * grafos[g-1].V[second, 0])
-        MODEL.addConstr(Rgi[g, i, 1] == rhogi[g, i] * grafos[g-1].V[first, 1] + (1 - rhogi[g, i]) * grafos[g-1].V[second, 1])
-        MODEL.addConstr(Lgi[g, i, 0] == landagi[g, i] * grafos[g-1].V[first, 0] + (1 - landagi[g, i]) * grafos[g-1].V[second, 0])
-        MODEL.addConstr(Lgi[g, i, 1] == landagi[g, i] * grafos[g-1].V[first, 1] + (1 - landagi[g, i]) * grafos[g-1].V[second, 1])
-
-    if not(datos.alpha):
-        for g in T_index_prima:
-            MODEL.addConstr(gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for i in grafos[g-1].aristas) >= grafos[g-1].alpha*grafos[g-1].longitud)
-
-    # # Fijado de variables
-    # for g in T_index_prima:
-    #     MODEL.addConstrs(zgij[g, i, j] == 1 for h, i, j in vals_zgij if h == g)
-    #     MODEL.addConstrs(ugi[h, i] == 1 for h, i in vals_u if h == g)
-    #     MODEL.addConstrs(vgi[h, i] == 1 for h, i in vals_v if h == g)
-
-    # MODEL.addConstrs(difL[g, dim] >=  xL[g, dim] - elipses[g].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difL[g, dim] >= -xL[g, dim] + elipses[g].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difL[g, 0]*difL[g, 0] + difL[g, 1]*difL[g, 1] <= elipses[g].radio*elipses[g].radio for g in T_index_prima)
-    #
-    # MODEL.addConstrs(difR[g, dim] >=  xR[g, dim] - elipses[g+1].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difR[g, dim] >= -xR[g, dim] + elipses[g+1].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difR[g, 0]*difR[g, 0] + difR[g, 1]*difR[g, 1] <= elipses[g+1].radio*elipses[g+1].radio for g in T_index_prima)
-
-    # Origen y destino
-    MODEL.addConstrs(xL[0, dim] == origin[dim] for dim in range(2))
-    MODEL.addConstrs(xR[0, dim] == origin[dim] for dim in range(2))
-
-    MODEL.addConstrs(xR[nG+1, dim] == dest[dim] for dim in range(2))
-    MODEL.addConstrs(xL[nG+1, dim] == dest[dim] for dim in range(2))
-
-    MODEL.update()
-
-    objective = gp.quicksum(dgLi[g, i]*vals_u[g, i] for g, i in dgLi.keys()) + gp.quicksum(dgRi[g, i]*vals_v[g, i] for g, i in dgRi.keys()) + gp.quicksum(dgij[g, i, j]*vals_zgij[g, i, j] for g, i, j in dgij.keys()) + gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for g in T_index_prima for i in grafos[g-1].aristas) + gp.quicksum(2*dLR[g] for g in dLR.keys()) + gp.quicksum(2*dRL[g1, g2]*vals_z[g1, g2] for g1, g2 in dRL.keys())
-    # objective = gp.quicksum(pgLi[g, i] + pgRi[g, i] for g, i in pgRi.keys()) + gp.quicksum(pgij[g, i, j] for g, i, j in pgij.keys()) + gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for g in T_index_prima for i in grafos[g-1].aristas) + gp.quicksum(2*dLR[g] for g in dLR.keys()) + gp.quicksum(2*pRL[g1, g2] for g1, g2 in dRL.keys())
-
-
-    # objective = gp.quicksum(2*dLR[g] for g in dLR.keys()) + gp.quicksum(2*pRL[g1, g2] for g1, g2 in dRL.keys())
-
-    # objective = gp.quicksum(dRL[t] + dLR[t] for t in T_index)
-
-    MODEL.setObjective(objective, GRB.MINIMIZE)
-    MODEL.Params.Threads = 6
-    # MODEL.Params.NonConvex = 2
-    MODEL.Params.timeLimit = 300
-    MODEL.Params.SolutionLimit = 2
-
-    MODEL.setParam('OutputFlag', 1)
-
-    MODEL.update()
-
-
-    MODEL.write('AMDRPG-MTZaux.lp')
-    MODEL.write('AMDRPG-MTZ.mps')
-
-    MODEL.optimize()
-
-    if MODEL.Status == 3:
-        MODEL.computeIIS()
-        MODEL.write('casa.ilp')
-
-    # fig, ax = plt.subplots()
-    # plt.axis([0, 100, 0, 100])
-
-    # vals_u = MODEL.getAttr('x', ugi)
-    # selected_u = gp.tuplelist((g, i)
-    #                           for g, i in ugi_index if vals_u[g, i] > 0.5)
-    selected_u = vals_u
-    #print(selected_u)
-
-    # vals_zgij = MODEL.getAttr('x', zgij)
-    # selected_zgij = gp.tuplelist((g, i, j)
-    #                           for g, i, j in zgij_index if vals_zgij[g, i, j] > 0.5)
-    selected_zgij = vals_zgij
-    #print(selected_zgij)
-
-    # vals_v = MODEL.getAttr('x', vgi)
-    # selected_v = gp.tuplelist((g, i)
-    #                           for g, i in vgi_index if vals_v[g, i] > 0.5)
-    #print(selected_v)
-    selected_v = vals_v
-
-    # valsz = MODEL.getAttr('x', z)
-
-    selected_z = gp.tuplelist(e for e in dRL.keys() if vals_z[e] > 0)
-    #print(selected_z)
-    #print(selected_z)
-    path = subtour(selected_z)
-    #print(path)
-
-    fig, ax = plt.subplots()
-    plt.axis([0, 100, 0, 100])
-
-    ind = 0
-    path_C = []
-    paths_D = []
-
-    for p in path:
-        path_C.append([xL[p, 0].X, xL[p, 1].X])
-        path_C.append([xR[p, 0].X, xR[p, 1].X])
-
-
-    for p in path[1:]:
-        #    if ind < nG:
-        if ind < nG:
-            path_D = []
-            path_D.append([xL[p, 0].X, xL[p, 1].X])
-            index_g = 0
-            index_i = 0
-            for g, i in selected_u:
-                if g == p:
-                    index_g = g
-                    index_i = i
-
-            count = 0
-            path_D.append([Rgi[index_g, index_i, 0].X, Rgi[index_g, index_i, 1].X])
-            path_D.append([Lgi[index_g, index_i, 0].X, Lgi[index_g, index_i, 1].X])
-            limite = sum([1 for g, i, j in selected_zgij if g == index_g])
-            while count < limite:
-                for g, i, j in selected_zgij:
-                    if index_g == g and index_i == i:
-                        count += 1
-                        index_i = j
-                        path_D.append([Rgi[index_g, index_i, 0].X, Rgi[index_g, index_i, 1].X])
-                        path_D.append([Lgi[index_g, index_i, 0].X, Lgi[index_g, index_i, 1].X])
-
-            ind += 1
-            path_D.append([xR[p, 0].X, xR[p, 1].X])
-        paths_D.append(path_D)
-    # path_C.append([xLt[nG+1, 0].X, xLt[nG+1, 1].X])
-
-
-    for g, i in rhogi.keys():
-        plt.plot(Rgi[g, i, 0].X, Rgi[g, i, 1].X, 'ko', markersize=1, color='cyan')
-        plt.plot(Lgi[g, i, 0].X, Lgi[g, i, 1].X, 'ko', markersize=1, color='cyan')
-    #
-    for p, i in zip(path, range(len(path))):
-        # path_C.append([xL[t, 0].X, xL[t, 1].X])
-        # path_C.append([xR[t, 0].X, xR[t, 1].X])
-        plt.plot(xL[p, 0].X, xL[p, 1].X, 'ko', alpha = 0.3, markersize=10, color='green')
-        ax.annotate("L" + str(i), xy = (xL[p, 0].X+0.5, xL[p, 1].X+0.5))
-        plt.plot(xR[p, 0].X, xR[p, 1].X, 'ko', markersize=5, color='blue')
-        ax.annotate("R" + str(i), xy = (xR[p, 0].X-1.5, xR[p, 1].X-1.5))
-
-    #
-    # for e in elipses:
-    #     ax.add_artist(e.artist)
-
-    ax.add_artist(Polygon(path_C, fill=False, animated=False,
-                  linestyle='-', alpha=1, color='blue'))
-
-    for path in paths_D:
-        ax.add_artist(Polygon(path, fill=False, closed=False,
-                      animated=False, alpha=1, color='red'))
-    #
-    # ax.add_artist(Polygon(path_D, fill=False, animated=False,
-    #               linestyle='dotted', alpha=1, color='red'))
-
-    for g in T_index_prima:
-        grafo = grafos[g-1]
-        centroide = np.mean(grafo.V, axis = 0)
-        nx.draw(grafo.G, grafo.pos, node_size=20,
-                node_color='black', alpha=0.3, edge_color='gray')
-        ax.annotate(g, xy = (centroide[0], centroide[1]))
-
-
-    plt.savefig('PD-MTZ-Heuristic ' + str(iter) + '.png')
-
-    # plt.show()
-    path = subtour(selected_z)
-
-    return MODEL.getAttr('x', xL), MODEL.getAttr('x', xR), path, MODEL.ObjVal
-
-def XPPNZ(datos, z, orig, dest, iter, elipses = []):
-
-    print()
-    print('--------------------------------------------')
-    print('Exact Formulation: Fixing w. Iteration: {0}'.format(iter))
-    print('--------------------------------------------')
-    print()
-
-    grafos = datos.mostrar_datos()
-
-    nG = len(grafos)
-
-    origin = orig
-
-
-    T_index = range(nG + 2)
-    T_index_prima = range(1, nG+1)
-    T_index_primaprima = range(nG+1)
-
-    vD = 3
-
-    vC = 1
-    # Creamos el modelo8
-    MODEL = gp.Model("PD-Graph")
-
-    # Variables que modelan las distancias
-    # Variable binaria ugi = 1 si en la etapa t entramos por el segmento sgi
-    ugi_index = []
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            ugi_index.append((g, i))
-
-
-    ugi = MODEL.addVars(ugi_index, vtype=GRB.BINARY, name='ugi')
-
-    # Variable continua no negativa dgLi que indica la distancia desde el punto de lanzamiento hasta el segmento
-    # sgi.
-    dgLi_index = ugi_index
-
-    dgLi = MODEL.addVars(dgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgLi')
-    auxgLi = MODEL.addVars(dgLi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgLi')
-
-    # Variable continua no negativa pgLi = ugi * dgLi
-    pgLi_index = ugi_index
-
-    pgLi = MODEL.addVars(pgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgLi')
-
-
-    # Variable binaria vgi = 1 si en la etapa t salimos por el segmento sgi
-    vgi_index = ugi_index
-
-    vgi = MODEL.addVars(vgi_index, vtype=GRB.BINARY, name='vgi')
-
-    # Variable continua no negativa dgRi que indica la distancia desde el punto de salida del segmento sgi hasta el
-    # punto de recogida del camion
-    dgRi_index = ugi_index
-
-    dgRi = MODEL.addVars(dgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgRi')
-    auxgRi = MODEL.addVars(dgRi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgRi')
-
-
-    # Variable continua no negativa pgRi = vgi * dgRi
-    pgRi_index = ugi_index
-
-    pgRi = MODEL.addVars(pgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgRi')
-
-
-    # Variable binaria zgij = 1 si voy del segmento i al segmento j del grafo g.
-    zgij_index = []
-    sgi_index = []
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            sgi_index.append((g, i))
-            for j in grafos[g-1].aristas:
-                if i != j:
-                    zgij_index.append((g, i, j))
-
-    zgij = MODEL.addVars(zgij_index, vtype=GRB.BINARY, name='zgij')
-    sgi = MODEL.addVars(sgi_index, vtype=GRB.CONTINUOUS, lb=0, name='sgi')
-
-    # Variable continua no negativa dgij que indica la distancia entre los segmentos i j en el grafo g.
-    dgij_index = zgij_index
-
-    dgij = MODEL.addVars(dgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-    auxgij = MODEL.addVars(
-        dgij_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-
-    # Variable continua no negativa pgij = zgij * dgij
-    pgij_index = zgij_index
-
-    pgij = MODEL.addVars(pgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgij')
-
-    # Distancia del punto de lanzamiento al punto de recogida
-    dLR = MODEL.addVars(T_index_prima, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'dLR')
-    auxLR = MODEL.addVars(T_index_prima, 2, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'difLR')
-
-    # Variable binaria z que vale uno si se va del grafo g al grafo g'
-    z_index = []
-
-    for v in T_index:
-        for w in T_index:
-            if v != w:
-                z_index.append((v, w))
-    #
-    # z = MODEL.addVars(z_index, vtype=GRB.BINARY, name='z')
-    s = MODEL.addVars(T_index, vtype=GRB.CONTINUOUS, lb=0, name='s')
-
-    dRL = MODEL.addVars(z_index, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'dRL')
-    auxRL = MODEL.addVars(z_index, 2, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'difRL')
-    pRL = MODEL.addVars(z_index, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'pRL')
-
-    # Variables que modelan los puntos de entrada o recogida
-    # xL: punto de salida del dron del camion en la etapa t
-    xL_index = []
-
-    for g in T_index:
-        for dim in range(2):
-            xL_index.append((g, dim))
-
-    xL = MODEL.addVars(xL_index, vtype=GRB.CONTINUOUS, name='xL')
-
-    # xR: punto de recogida del dron del camion en la etapa t
-    xR_index = []
-
-    for t in T_index:
-        for dim in range(2):
-            xR_index.append((t, dim))
-
-    xR = MODEL.addVars(xR_index, vtype=GRB.CONTINUOUS, name='xR')
-
-    # Rgi: punto de recogida del dron para el segmento sgi
-    Rgi_index = []
-    rhogi_index = []
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            rhogi_index.append((g, i))
-            for dim in range(2):
-                Rgi_index.append((g, i, dim))
-
-    Rgi = MODEL.addVars(Rgi_index, vtype=GRB.CONTINUOUS, name='Rgi')
-    rhogi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='rhogi')
-
-    # Lgi: punto de lanzamiento del dron del segmento sgi
-    Lgi_index = Rgi_index
-    landagi_index = rhogi_index
-
-    Lgi = MODEL.addVars(Lgi_index, vtype=GRB.CONTINUOUS, name='Lgi')
-    landagi = MODEL.addVars(landagi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='landagi')
-
-    # Variables auxiliares para modelar el valor absoluto
-    mingi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='mingi')
-    maxgi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='maxgi')
-    entrygi = MODEL.addVars(rhogi_index, vtype=GRB.BINARY, name='entrygi')
-    mugi = MODEL.addVars(rhogi_index, vtype = GRB.BINARY, name = 'mugi')
-    pgi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'pgi')
-    alphagi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'alphagi')
-
-    difL = MODEL.addVars(T_index, 2, vtype = GRB.CONTINUOUS, name = 'difL')
-
-    difR = MODEL.addVars(T_index, 2, vtype = GRB.CONTINUOUS, name = 'difR')
-
-
-    MODEL.update()
-
-
-    # Para cada grafo g, existe un segmento i y una etapa t donde hay que recoger al dron
-    MODEL.addConstrs((ugi.sum(g, '*') == 1 for g in T_index_prima), name = 'entrag')
-    MODEL.addConstrs((vgi.sum(g, '*') == 1 for g in T_index_prima), name = 'saleg')
-
-    # MODEL.addConstrs(ugi.sum('*', i, '*') == 1 for i in range(nG))
-    # MODEL.addConstrs(vgi.sum('*', i, '*') == 1 for g in range(nG))
-
-    # De todos los segmentos hay que salir y entrar menos de aquel que se toma como entrada al grafo y como salida del grafo
-    MODEL.addConstrs((mugi[g, i] - ugi[g, i] == zgij.sum(g, '*', i) for g, i, j in zgij.keys()), name = 'flujou')
-    MODEL.addConstrs((mugi[g, i] - vgi[g, i] == zgij.sum(g, i, '*') for g, i, j in zgij.keys()), name = 'flujov')
-
-    MODEL.addConstrs((pgi[g, i] >= mugi[g, i] + alphagi[g, i] - 1 for g, i in rhogi.keys()), name = 'pgi1')
-    MODEL.addConstrs((pgi[g, i] <= mugi[g, i] for g, i in rhogi.keys()), name = 'pgi2')
-    MODEL.addConstrs((pgi[g, i] <= alphagi[g, i] for g, i in rhogi.keys()), name = 'pgi3')
-
-    # MODEL.addConstr(ugi[0, 101, 0] == 0)
-    # MODEL.addConstr(ugi[0, 101, 1] == 0)
-
-
-    # Eliminaci贸n de subtours
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas[0:]:
-            for j in grafos[g-1].aristas[0:]:
-                if i != j:
-                    MODEL.addConstr(grafos[g-1].num_aristas - 1 >= (sgi[g, i] - sgi[g, j]) + grafos[g-1].num_aristas * zgij[g, i, j])
-
-    # for g in range(nG):
-    #     MODEL.addConstr(sgi[g, grafos[g].aristas[0]] == 0)
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas[0:]:
-            MODEL.addConstr(sgi[g, i] >= 0)
-            MODEL.addConstr(sgi[g, i] <= grafos[g-1].num_aristas - 1)
-
-
-    # Restricciones de distancias y producto
-    MODEL.addConstrs((auxgLi[g, i, dim] >=   xL[g, dim] - Rgi[g, i, dim]) for g, i, dim in auxgLi.keys())
-    MODEL.addConstrs((auxgLi[g, i, dim] >= - xL[g, dim] + Rgi[g, i, dim]) for g, i, dim in auxgLi.keys())
-
-    MODEL.addConstrs((auxgLi[g, i, 0]*auxgLi[g, i, 0] + auxgLi[g, i, 1] * auxgLi[g, i, 1] <= dgLi[g, i] * dgLi[g, i] for g, i in ugi.keys()), name = 'u-conic')
-
-    SmallM = 0
-    BigM = 10000
-
-    # BigM = 0
-    # for g in T_index_prima:
-    #     for v in grafos[g-1].V:
-    #         BigM = max([np.linalg.norm(origin - v), BigM])
-    #
-    # BigM += 5
-    #BigM = max([np.linalg.norm(origin-grafos[g].V) for g in range(nG)])
-
-    # MODEL.addConstr(ugi[1, 101] == 1)
-    # MODEL.addConstr(vgi[1, 203] == 1)
-
-    MODEL.addConstrs((pgLi[g, i] >= SmallM * ugi[g, i]) for g, i in ugi.keys())
-    MODEL.addConstrs((pgLi[g, i] >= dgLi[g, i] - BigM * (1 - ugi[g, i])) for g, i in ugi.keys())
-
-    MODEL.addConstrs((auxgij[g, i, j, dim] >=   Lgi[g, i, dim] - Rgi[g, j, dim]) for g, i, j, dim in auxgij.keys())
-    MODEL.addConstrs((auxgij[g, i, j, dim] >= - Lgi[g, i, dim] + Rgi[g, j, dim]) for g, i, j, dim in auxgij.keys())
-
-    MODEL.addConstrs((auxgij[g, i, j, 0]*auxgij[g, i, j, 0] + auxgij[g, i, j, 1] * auxgij[g, i, j, 1] <= dgij[g, i, j] * dgij[g, i, j] for g, i, j in dgij.keys()), name = 'zgij-conic')
-
-
-    for g, i, j in zgij.keys():
-        first_i = i // 100 - 1
-        second_i = i % 100
-        first_j = j // 100 - 1
-        second_j = j % 100
-
-        segm_i = Poligonal(np.array([[grafos[g-1].V[first_i, 0], grafos[g-1].V[first_i, 1]], [
-                           grafos[g-1].V[second_i, 0], grafos[g-1].V[second_i, 1]]]), grafos[g-1].A[first_i, second_i])
-        segm_j = Poligonal(np.array([[grafos[g-1].V[first_j, 0], grafos[g-1].V[first_j, 1]], [
-                           grafos[g-1].V[second_j, 0], grafos[g-1].V[second_j, 1]]]), grafos[g-1].A[first_j, second_j])
-
-        BigM_local = eM.estima_BigM_local(segm_i, segm_j)
-        SmallM_local = eM.estima_SmallM_local(segm_i, segm_j)
-        MODEL.addConstr((pgij[g, i, j] >= SmallM_local * zgij[g, i, j]))
-        MODEL.addConstr((pgij[g, i, j] >= dgij[g, i, j] - BigM_local * (1 - zgij[g, i, j])))
-
-    MODEL.addConstrs((auxgRi[g, i, dim] >=   Lgi[g, i, dim] - xR[g, dim]) for g, i, dim in auxgRi.keys())
-    MODEL.addConstrs((auxgRi[g, i, dim] >= - Lgi[g, i, dim] + xR[g, dim]) for g, i, dim in auxgRi.keys())
-
-    MODEL.addConstrs((auxgRi[g, i, 0]*auxgRi[g, i, 0] + auxgRi[g, i, 1] * auxgRi[g, i, 1] <= dgRi[g, i] * dgRi[g, i] for g, i in vgi.keys()), name = 'v-conic')
-
-
-    # SmallM = 0
-    #BigM = 10000
-    MODEL.addConstrs((pgRi[g, i] >= SmallM * vgi[g, i]) for g, i in vgi.keys())
-    MODEL.addConstrs((pgRi[g, i] >= dgRi[g, i] - BigM * (1 - vgi[g, i])) for g, i in vgi.keys())
-
-    MODEL.addConstrs((auxRL[g1, g2, dim] >=   xR[g1, dim] - xL[g2, dim]) for g1, g2, dim in auxRL.keys())
-    MODEL.addConstrs((auxRL[g1, g2, dim] >= - xR[g1, dim] + xL[g2, dim]) for g1, g2, dim in auxRL.keys())
-    MODEL.addConstrs((auxRL[g1, g2, 0]*auxRL[g1, g2, 0] + auxRL[g1, g2, 1] * auxRL[g1, g2, 1] <= dRL[g1, g2] * dRL[g1, g2] for g1, g2 in dRL.keys()), name = 'RL-conic')
-
-    # MODEL.addConstrs((pRL[g1, g2] >= SmallM * z[g1, g2] for g1, g2 in dRL.keys()))
-    # MODEL.addConstrs((pRL[g1, g2] >= dRL[g1, g2] - BigM * (1 - z[g1, g2]) for g1, g2 in dRL.keys()))
-
-    # Restricciones para formar un tour
-    # MODEL.addConstr(gp.quicksum(z[v, 0] for v in T_index_prima) == 0)
-    # MODEL.addConstr(gp.quicksum(z[nG+1, w] for w in T_index_prima) == 0)
-    # MODEL.addConstrs(gp.quicksum(z[v , w] for w in T_index if w != v) == 1 for v in T_index)
-    # MODEL.addConstrs(gp.quicksum(z[w , v] for w in T_index if w != v) == 1 for v in T_index)
-
-    # Conectividad
-    # for v in T_index_prima:
-    #     for w in T_index_prima:
-    #         if v != w:
-    #             MODEL.addConstr(len(T_index) - 1 >= (s[v] - s[w]) + len(T_index) * z[v, w])
-
-    # for v in range(1, nG+1):
-    #     MODEL.addConstr(s[v] - s[0] + (nG+1 - 2)*z[0, v] <= len(T_index) - 1)
-    #
-    # for v in range(1, nG+1):
-    #     MODEL.addConstr(s[0] - s[v] + (nG+1 - 1)*z[v, 0] <= 0)
-
-    # for v in range(1, nG+1):
-    #     MODEL.addConstr(-z[0,v] - s[v] + (nG+1-3)*z[v,0] <= -2, name="LiftedLB(%s)"%v)
-    #     MODEL.addConstr(-z[v,0] + s[v] + (nG+1-3)*z[0,v] <= nG+1-2, name="LiftedUB(%s)"%v)
-
-    # for v in T_index_prima:
-    #     MODEL.addConstr(s[v] >= 1)
-    #     MODEL.addConstr(s[v] <= len(T_index) - 1)
-    #
-    # MODEL.addConstr(s[0] == 0)
-    # MODEL.addConstr(s[nG + 1] == nG+1)
-
-    MODEL.addConstrs((auxLR[g, dim] >=   xL[g, dim] - xR[g, dim]) for g, dim in auxLR.keys())
-    MODEL.addConstrs((auxLR[g, dim] >= - xL[g, dim] + xR[g, dim]) for g, dim in auxLR.keys())
-    MODEL.addConstrs((auxLR[g, 0]*auxLR[g, 0] + auxLR[g, 1] * auxLR[g, 1] <= dLR[g] * dLR[g] for g in dLR.keys()), name = 'LR-conic')
-
-    MODEL.addConstrs((pgLi.sum(g, '*') + pgij.sum(g, '*', '*') +  gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for i in grafos[g-1].aristas) + pgRi.sum(g, '*'))/vD <= dLR[g]/vC for g in T_index_prima)
-
-    # MODEL.addConstrs(dLR[g] <= 150 for g in dLR.keys())
-    # MODEL.addConstrs((pgLi.sum('*', '*', t) +
-    #                   pgij.sum(g, '*', '*') +
-    #                   ugi.sum(g, '*', '*')*longitudes[g-1] +
-    #                   pgRi.sum('*', '*', t))/vD <= dLR[t]/vC for t in T_index_prima for g in T_index_prima)
-    # MODEL.addConstrs((dLR[t]/vD <= 50) for t in T_index_prima)
-    # MODEL.addConstrs((pgLi[g, i, t]
-    #                   + pgij.sum(g, '*', '*') + grafos[g-1].A[i // 100 - 1, i % 100]*grafos[g-1].longaristas[i // 100 - 1, i % 100]
-    #                   + pgRi[g, i, t])/vD <= dLR[t]/vC for g, i, t in pgLi.keys())
-
-    # MODEL.addConstr(z[0, 2] + z[1, 3] + z[2, 1] + z[3, 4] == 4)
-
-    for g, i in rhogi.keys():
-        first = i // 100 - 1
-        second = i % 100
-        MODEL.addConstr(rhogi[g, i] - landagi[g, i] == maxgi[g, i] - mingi[g, i])
-        MODEL.addConstr(maxgi[g, i] + mingi[g, i] == alphagi[g, i])
-        if datos.alpha:
-            MODEL.addConstr(pgi[g, i] >= grafos[g-1].A[first, second])
-        MODEL.addConstr(maxgi[g, i] <= 1 - entrygi[g, i])
-        MODEL.addConstr(mingi[g, i] <= entrygi[g, i])
-        MODEL.addConstr(Rgi[g, i, 0] == rhogi[g, i] * grafos[g-1].V[first, 0] + (1 - rhogi[g, i]) * grafos[g-1].V[second, 0])
-        MODEL.addConstr(Rgi[g, i, 1] == rhogi[g, i] * grafos[g-1].V[first, 1] + (1 - rhogi[g, i]) * grafos[g-1].V[second, 1])
-        MODEL.addConstr(Lgi[g, i, 0] == landagi[g, i] * grafos[g-1].V[first, 0] + (1 - landagi[g, i]) * grafos[g-1].V[second, 0])
-        MODEL.addConstr(Lgi[g, i, 1] == landagi[g, i] * grafos[g-1].V[first, 1] + (1 - landagi[g, i]) * grafos[g-1].V[second, 1])
-
-    if not(datos.alpha):
-        for g in T_index_prima:
-            MODEL.addConstr(gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for i in grafos[g-1].aristas) >= grafos[g-1].alpha*grafos[g-1].longitud)
-
-
-    # if elipses:
-    #     MODEL.addConstrs(difL[g, dim] >=  xL[g, dim] - elipses[g].centro[dim] for dim in range(2) for g in T_index_prima)
-    #     MODEL.addConstrs(difL[g, dim] >= -xL[g, dim] + elipses[g].centro[dim] for dim in range(2) for g in T_index_prima)
-    #     MODEL.addConstrs(difL[g, 0]*difL[g, 0] + difL[g, 1]*difL[g, 1] <= elipses[g].radio*elipses[g].radio for g in T_index_prima)
-    #
-    #     MODEL.addConstrs(difR[g, dim] >=  xR[g, dim] - elipses[g+1].centro[dim] for dim in range(2) for g in T_index_prima)
-    #     MODEL.addConstrs(difR[g, dim] >= -xR[g, dim] + elipses[g+1].centro[dim] for dim in range(2) for g in T_index_prima)
-    #     MODEL.addConstrs(difR[g, 0]*difR[g, 0] + difR[g, 1]*difR[g, 1] <= elipses[g+1].radio*elipses[g+1].radio for g in T_index_prima)
-
-    # Origen y destino
-    MODEL.addConstrs(xL[0, dim] == origin[dim] for dim in range(2))
-    MODEL.addConstrs(xR[0, dim] == origin[dim] for dim in range(2))
-
-    MODEL.addConstrs(xR[nG+1, dim] == dest[dim] for dim in range(2))
-    MODEL.addConstrs(xL[nG+1, dim] == dest[dim] for dim in range(2))
-
-    MODEL.update()
-
-    objective = gp.quicksum(pgLi[g, i] + pgRi[g, i] for g, i in pgRi.keys()) + gp.quicksum(pgij[g, i, j] for g, i, j in pgij.keys()) + gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for g in T_index_prima for i in grafos[g-1].aristas) + gp.quicksum(3*dLR[g] for g in dLR.keys()) + gp.quicksum(3*dRL[g1, g2]*z[g1, g2] for g1, g2 in dRL.keys())
-
-    # objective = gp.quicksum(1*dLR[g] for g in dLR.keys()) + gp.quicksum(dRL[g1, g2]*z[g1, g2] for g1, g2 in dRL.keys())
-
-    # objective = gp.quicksum(dRL[t] + dLR[t] for t in T_index)
-
-    MODEL.setObjective(objective, GRB.MINIMIZE)
-    MODEL.Params.Threads = 6
-    # MODEL.Params.NonConvex = 2
-    MODEL.Params.timeLimit = 300
-    MODEL.Params.SolutionLimit = 2
-
-    MODEL.update()
-
-    MODEL.write('AMDRPG-MTZ.lp')
-    MODEL.write('AMDRPG-MTZ.mps')
-    MODEL.optimize()
-
-
-    MODEL.update()
-
-    if MODEL.Status == 3:
-        MODEL.computeIIS()
-        MODEL.write('casa.ilp')
-
-    fig, ax = plt.subplots()
-    plt.axis([0, 100, 0, 100])
-
-    vals_u = MODEL.getAttr('x', ugi)
-    selected_u = gp.tuplelist((g, i)
-                              for g, i in vals_u.keys() if vals_u[g, i] > 0.5)
-    #print(selected_u)
-
-    vals_zgij = MODEL.getAttr('x', zgij)
-    selected_zgij = gp.tuplelist((g, i, j)
-                              for g, i, j in vals_zgij.keys() if vals_zgij[g, i, j] > 0.5)
-    #print(selected_zgij)
-
-    vals_v = MODEL.getAttr('x', vgi)
-    selected_v = gp.tuplelist((g, i)
-                              for g, i in vals_v.keys() if vals_v[g, i] > 0.5)
-    #print(selected_v)
-
-    selected_z = gp.tuplelist(e for e in dRL.keys() if z[e] > 0)
-    # print(selected_z)
-    # path = subtour(selected_z)
-    # print(selected_z)
-    path = subtour(selected_z)
-
-
-    ind = 0
-    path_C = []
-    paths_D = []
-
-    for p in path:
-        path_C.append([xL[p, 0].X, xL[p, 1].X])
-        path_C.append([xR[p, 0].X, xR[p, 1].X])
-
-
-    for p in path[1:]:
-        #    if ind < nG:
-        if ind < nG:
-            path_D = []
-            path_D.append([xL[p, 0].X, xL[p, 1].X])
-            index_g = 0
-            index_i = 0
-            for g, i in selected_u:
-                if g == p:
-                    index_g = g
-                    index_i = i
-
-            count = 0
-            path_D.append([Rgi[index_g, index_i, 0].X, Rgi[index_g, index_i, 1].X])
-            path_D.append([Lgi[index_g, index_i, 0].X, Lgi[index_g, index_i, 1].X])
-            limite = sum([1 for g, i, j in selected_zgij if g == index_g])
-            while count < limite:
-                for g, i, j in selected_zgij:
-                    if index_g == g and index_i == i:
-                        count += 1
-                        index_i = j
-                        path_D.append([Rgi[index_g, index_i, 0].X, Rgi[index_g, index_i, 1].X])
-                        path_D.append([Lgi[index_g, index_i, 0].X, Lgi[index_g, index_i, 1].X])
-
-            ind += 1
-            path_D.append([xR[p, 0].X, xR[p, 1].X])
-        paths_D.append(path_D)
-
-    # path_C.append([xLt[nG+1, 0].X, xLt[nG+1, 1].X])
-
-
-    # for g, i in rhogi.keys():
-    #     plt.plot(Rgi[g, i, 0].X, Rgi[g, i, 1].X, 'ko', markersize=1, color='cyan')
-    #     plt.plot(Lgi[g, i, 0].X, Lgi[g, i, 1].X, 'ko', markersize=1, color='cyan')
-    #
-    # for p, i in zip(path, range(len(path))):
-    #     # path_C.append([xL[t, 0].X, xL[t, 1].X])
-    #     # path_C.append([xR[t, 0].X, xR[t, 1].X])
-    #     plt.plot(xL[p, 0].X, xL[p, 1].X, 'ko', alpha = 0.3, markersize=10, color='green')
-    #     ax.annotate("L" + str(i), xy = (xL[p, 0].X+0.5, xL[p, 1].X+0.5))
-    #     plt.plot(xR[p, 0].X, xR[p, 1].X, 'ko', markersize=5, color='blue')
-    #     ax.annotate("R" + str(i), xy = (xR[p, 0].X-1.5, xR[p, 1].X-1.5))
-    #
-    #
-    # ax.add_artist(Polygon(path_C, fill=False, animated=False,
-    #               linestyle='-', alpha=1, color='blue'))
-    #
-    # for paths in paths_D:
-    #     ax.add_artist(Polygon(paths, fill=False, closed=False,
-    #                   animated=False, alpha=1, color='red', lw = 0.1))
-    # #
-    # # ax.add_artist(Polygon(path_D, fill=False, animated=False,
-    # #               linestyle='dotted', alpha=1, color='red'))
-    #
-    # if elipses:
-    #     for e in elipses:
-    #         ax.add_artist(e.artist)
-    #
-    # for g in T_index_prima:
-    #     grafo = grafos[g-1]
-    #     centroide = np.mean(grafo.V, axis = 0)
-    #     nx.draw(grafo.G, grafo.pos, node_size=30,
-    #             node_color='black', alpha=1, edge_color='gray')
-    #     ax.annotate(g, xy = (centroide[0], centroide[1]))
-    #     nx.draw_networkx_labels(grafo.G, grafo.pos, font_color = 'red', font_size=5)
-    #
-    # plt.savefig('PD-MTZ-Heuristic ' + str(iter) + '.png')
-
-    # plt.show()
-    return MODEL.getAttr('x', xL), MODEL.getAttr('x', xR), MODEL.ObjVal#
-#
-#
-#
-#
-#
-#
-#
-def XPPNZZ(datos, vals_u, vals_zgij, vals_v, z, orig, dest, iter):
-
-    grafos = datos.data
-
-    nG = len(grafos)
-    T_index = range(nG + 2)
-    T_index_prima = range(1, nG+1)
-    T_index_primaprima = range(nG+1)
-
-    origin = orig
-    dest = orig
-
-    vD = 3
-
-    vC = 1
-
-    MODEL = gp.Model('XPPNM')
-
-    ugi_index = []
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            ugi_index.append((g, i))
-    #
-    #
-    #ugi = MODEL.addVars(ugi_index, vtype=GRB.BINARY, name='ugi')
-
-    # Variable continua no negativa dgLi que indica la distancia desde el punto de lanzamiento hasta el segmento
-    # sgi.
-    dgLi_index = ugi_index
-
-    dgLi = MODEL.addVars(dgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgLi')
-    auxgLi = MODEL.addVars(dgLi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgLi')
-
-    # # Variable continua no negativa pgLi = ugi * dgLi
-    # pgLi_index = ugi_index
-    #
-    # pgLi = MODEL.addVars(pgLi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgLi')
-
-
-    # # Variable binaria vgi = 1 si en la etapa t salimos por el segmento sgi
-    # vgi_index = ugi_index
-    #
-    # vgi = MODEL.addVars(vgi_index, vtype=GRB.BINARY, name='vgi')
-
-    # Variable continua no negativa dgRi que indica la distancia desde el punto de salida del segmento sgi hasta el
-    # punto de recogida del camion
-    dgRi_index = ugi_index
-
-    dgRi = MODEL.addVars(dgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgRi')
-    auxgRi = MODEL.addVars(dgRi_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='difgRi')
-
-
-    # Variable continua no negativa pgRi = vgi * dgRi
-    # pgRi_index = ugi_index
-    #
-    # pgRi = MODEL.addVars(pgRi_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgRi')
-
-
-    # # Variable binaria zgij = 1 si voy del segmento i al segmento j del grafo g.
-    zgij_index = []
-    sgi_index = []
-    #
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            sgi_index.append((g, i))
-            for j in grafos[g-1].aristas:
-                if i != j:
-                    zgij_index.append((g, i, j))
-    #
-    #
-    # zgij = MODEL.addVars(zgij_index, vtype=GRB.BINARY, name='zgij')
-    # sgi = MODEL.addVars(sgi_index, vtype=GRB.CONTINUOUS, lb=0, name='sgi')
-
-    # Variable continua no negativa dgij que indica la distancia entre los segmentos i j en el grafo g.
-    dgij_index = zgij_index
-
-    dgij = MODEL.addVars(dgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-    auxgij = MODEL.addVars(
-        dgij_index, 2, vtype=GRB.CONTINUOUS, lb=0.0, name='dgij')
-
-    # Variable continua no negativa pgij = zgij * dgij
-    pgij_index = zgij_index
-
-    # pgij = MODEL.addVars(pgij_index, vtype=GRB.CONTINUOUS, lb=0.0, name='pgij')
-
-    # Distancia del punto de lanzamiento al punto de recogida
-    dLR = MODEL.addVars(T_index_prima, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'dLR')
-    auxLR = MODEL.addVars(T_index_prima, 2, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'difLR')
-
-    # Variable binaria z que vale uno si se va del grafo g al grafo g'
-    z_index = []
-
-    for v in T_index:
-        for w in T_index:
-            if v != w:
-                z_index.append((v, w))
-
-    # z = MODEL.addVars(z_index, vtype=GRB.BINARY, name='z')
-    s = MODEL.addVars(T_index, vtype=GRB.CONTINUOUS, lb=0, name='s')
-
-    dRL = MODEL.addVars(z_index, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'dRL')
-    auxRL = MODEL.addVars(z_index, 2, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'difRL')
-    pRL = MODEL.addVars(z_index, vtype = GRB.CONTINUOUS, lb = 0.0, name = 'pRL')
-
-    # Variables que modelan los puntos de entrada o recogida
-    # xL: punto de salida del dron del camion en la etapa t
-    xL_index = []
-
-    for g in T_index:
-        for dim in range(2):
-            xL_index.append((g, dim))
-
-    xL = MODEL.addVars(xL_index, vtype=GRB.CONTINUOUS, name='xL')
-
-    # xR: punto de recogida del dron del camion en la etapa t
-    xR_index = []
-
-    for t in T_index:
-        for dim in range(2):
-            xR_index.append((t, dim))
-
-    xR = MODEL.addVars(xR_index, vtype=GRB.CONTINUOUS, name='xR')
-
-    # Rgi: punto de recogida del dron para el segmento sgi
-    Rgi_index = []
-    rhogi_index = []
-
-    for g in T_index_prima:
-        for i in grafos[g-1].aristas:
-            rhogi_index.append((g, i))
-            for dim in range(2):
-                Rgi_index.append((g, i, dim))
-
-    Rgi = MODEL.addVars(Rgi_index, vtype=GRB.CONTINUOUS, name='Rgi')
-    rhogi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='rhogi')
-
-    # Lgi: punto de lanzamiento del dron del segmento sgi
-    Lgi_index = Rgi_index
-    landagi_index = rhogi_index
-
-    Lgi = MODEL.addVars(Lgi_index, vtype=GRB.CONTINUOUS, name='Lgi')
-    landagi = MODEL.addVars(landagi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='landagi')
-
-    # Variables auxiliares para modelar el valor absoluto
-    mingi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='mingi')
-    maxgi = MODEL.addVars(rhogi_index, vtype=GRB.CONTINUOUS, lb=0.0, ub = 1.0, name='maxgi')
-    entrygi = MODEL.addVars(rhogi_index, vtype=GRB.BINARY, name='entrygi')
-    mugi = MODEL.addVars(rhogi_index, vtype = GRB.BINARY, name = 'mugi')
-    pgi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'pgi')
-    alphagi = MODEL.addVars(rhogi_index, vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0, name = 'alphagi')
-
-    difL = MODEL.addVars(T_index, 2, vtype = GRB.CONTINUOUS, name = 'difL')
-
-    difR = MODEL.addVars(T_index, 2, vtype = GRB.CONTINUOUS, name = 'difR')
-
-    MODEL.update()
-
-    # # Para cada grafo g, existe un segmento i y una etapa t donde hay que recoger al dron
-    # MODEL.addConstrs((ugi.sum(g, '*') == 1 for g in T_index_prima), name = 'entrag')
-    # MODEL.addConstrs((vgi.sum(g, '*') == 1 for g in T_index_prima), name = 'saleg')
-
-    # MODEL.addConstrs(ugi.sum('*', i, '*') == 1 for i in range(nG))
-    # MODEL.addConstrs(vgi.sum('*', i, '*') == 1 for g in range(nG))
-
-    # De todos los segmentos hay que salir y entrar menos de aquel que se toma como entrada al grafo y como salida del grafo
-    # MODEL.addConstrs((mugi[g, i] - ugi[g, i] == zgij.sum(g, '*', i) for g, i, j in zgij.keys()), name = 'flujou')
-    # MODEL.addConstrs((mugi[g, i] - vgi[g, i] == zgij.sum(g, i, '*') for g, i, j in zgij.keys()), name = 'flujov')
-
-    MODEL.addConstrs((pgi[g, i] >= mugi[g, i] + alphagi[g, i] - 1 for g, i in rhogi.keys()), name = 'pgi1')
-    MODEL.addConstrs((pgi[g, i] <= mugi[g, i] for g, i in rhogi.keys()), name = 'pgi2')
-    MODEL.addConstrs((pgi[g, i] <= alphagi[g, i] for g, i in rhogi.keys()), name = 'pgi3')
-
-
-    # # Eliminaci贸n de subtours
-    # for g in T_index_prima:
-    #     for i in grafos[g-1].aristas[0:]:
-    #         for j in grafos[g-1].aristas[0:]:
-    #             if i != j:
-    #                 MODEL.addConstr(grafos[g-1].num_aristas - 1 >= (sgi[g, i] - sgi[g, j]) + grafos[g-1].num_aristas * zgij[g, i, j])
-
-
-    # for g in T_index_prima:
-    #     for i in grafos[g-1].aristas[0:]:
-    #         MODEL.addConstr(sgi[g, i] >= 0)
-    #         MODEL.addConstr(sgi[g, i] <= grafos[g-1].num_aristas - 1)
-
-
-    # Restricciones de distancias y producto
-    MODEL.addConstrs((auxgLi[g, i, dim] >=   xL[g, dim] - Rgi[g, i, dim]) for g, i, dim in auxgLi.keys())
-    MODEL.addConstrs((auxgLi[g, i, dim] >= - xL[g, dim] + Rgi[g, i, dim]) for g, i, dim in auxgLi.keys())
-
-    MODEL.addConstrs((auxgLi[g, i, 0]*auxgLi[g, i, 0] + auxgLi[g, i, 1] * auxgLi[g, i, 1] <= dgLi[g, i] * dgLi[g, i] for g, i in dgLi.keys()), name = 'u-conic')
-
-    # SmallM = []
-    # BigM = []
-    #
-    # for g in T_index_prima:
-    #     BigM.append(max([np.linalg.norm(elipses[g-1].centro - v) for v in grafos[g-1].V]) + elipses[g].radio)
-    #     SmallM.append(dist_grafo(elipses[g-1].centro, grafos[g-1])[0] - elipses[g-1].radio)
-
-    # MODEL.addConstrs((pgLi[g, i] >= SmallM[g] * ugi[g, i]) for g, i in ugi.keys())
-    # MODEL.addConstrs((pgLi[g, i] >= dgLi[g, i] - BigM[g] * (1 - ugi[g, i])) for g, i in ugi.keys())
-
-    MODEL.addConstrs((auxgij[g, i, j, dim] >=   Lgi[g, i, dim] - Rgi[g, j, dim]) for g, i, j, dim in auxgij.keys())
-    MODEL.addConstrs((auxgij[g, i, j, dim] >= - Lgi[g, i, dim] + Rgi[g, j, dim]) for g, i, j, dim in auxgij.keys())
-
-    MODEL.addConstrs((auxgij[g, i, j, 0]*auxgij[g, i, j, 0] + auxgij[g, i, j, 1] * auxgij[g, i, j, 1] <= dgij[g, i, j] * dgij[g, i, j] for g, i, j in dgij.keys()), name = 'zgij-conic')
-
-
-    # for g, i, j in zgij.keys():
-    #     first_i = i // 100 - 1
-    #     second_i = i % 100
-    #     first_j = j // 100 - 1
-    #     second_j = j % 100
-    #
-    #     segm_i = Poligonal(np.array([[grafos[g-1].V[first_i, 0], grafos[g-1].V[first_i, 1]], [
-    #                        grafos[g-1].V[second_i, 0], grafos[g-1].V[second_i, 1]]]), grafos[g-1].A[first_i, second_i])
-    #     segm_j = Poligonal(np.array([[grafos[g-1].V[first_j, 0], grafos[g-1].V[first_j, 1]], [
-    #                        grafos[g-1].V[second_j, 0], grafos[g-1].V[second_j, 1]]]), grafos[g-1].A[first_j, second_j])
-    #
-    #     BigM_local = eM.estima_BigM_local(segm_i, segm_j)
-    #     SmallM_local = eM.estima_SmallM_local(segm_i, segm_j)
-    #     MODEL.addConstr((pgij[g, i, j] >= SmallM_local * zgij[g, i, j]))
-    #     MODEL.addConstr((pgij[g, i, j] >= dgij[g, i, j] - BigM_local * (1 - zgij[g, i, j])))
-
-    MODEL.addConstrs((auxgRi[g, i, dim] >=   Lgi[g, i, dim] - xR[g, dim]) for g, i, dim in auxgRi.keys())
-    MODEL.addConstrs((auxgRi[g, i, dim] >= - Lgi[g, i, dim] + xR[g, dim]) for g, i, dim in auxgRi.keys())
-
-    MODEL.addConstrs((auxgRi[g, i, 0]*auxgRi[g, i, 0] + auxgRi[g, i, 1] * auxgRi[g, i, 1] <= dgRi[g, i] * dgRi[g, i] for g, i in dgRi.keys()), name = 'v-conic')
-
-
-    # SmallM = 0
-    #BigM = 10000
-    # SmallM = []
-    # BigM = []
-    #
-    # for g in T_index_prima:
-    #     BigM.append(max([np.linalg.norm(elipses[g].centro - v) for v in grafos[g-1].V]) + elipses[g].radio)
-    #     SmallM.append(dist_grafo(elipses[g].centro, grafos[g-1])[0] - elipses[g].radio)
-
-    # MODEL.addConstrs((pgRi[g, i] >= SmallM[g] * vgi[g, i]) for g, i in vgi.keys())
-    # MODEL.addConstrs((pgRi[g, i] >= dgRi[g, i] - BigM[g] * (1 - vgi[g, i])) for g, i in vgi.keys())
-
-    MODEL.addConstrs((auxRL[g1, g2, dim] >=   xR[g1, dim] - xL[g2, dim]) for g1, g2, dim in auxRL.keys())
-    MODEL.addConstrs((auxRL[g1, g2, dim] >= - xR[g1, dim] + xL[g2, dim]) for g1, g2, dim in auxRL.keys())
-    MODEL.addConstrs((auxRL[g1, g2, 0]*auxRL[g1, g2, 0] + auxRL[g1, g2, 1] * auxRL[g1, g2, 1] <= dRL[g1, g2] * dRL[g1, g2] for g1, g2 in dRL.keys()), name = 'RL-conic')
-
-
-
-    # SmallM = 0
-    # BigM = 10000
-    #
-    # BigM = 0
-    # for g in T_index_prima:
-    #     for v in grafos[g-1].V:
-    #         BigM = max([np.linalg.norm(origin - v), BigM])
-    # MODEL.addConstrs((pRL[g1, g2] >= SmallM * z[g1, g2] for g1, g2 in z.keys()))
-    # MODEL.addConstrs((pRL[g1, g2] >= dRL[g1, g2] - BigM * (1 - z[g1, g2]) for g1, g2 in z.keys()))
-
-    # SmallM = np.zeros((nG+2, nG+2))
-    # BigM = np.zeros((nG+2, nG+2))
-    #
-    # for g1, g2 in z.keys():
-    #     BigM[g1, g2] = eM.estima_BigM_local(elipses[g1], elipses[g2])
-    #     SmallM[g1, g2] = eM.estima_SmallM_local(elipses[g1], elipses[g2])
-
-    # MODEL.addConstrs((pRL[g1, g2] >= SmallM[g1, g2] * z[g1, g2] for g1, g2 in z.keys()))
-    # MODEL.addConstrs((pRL[g1, g2] >= dRL[g1, g2] - BigM[g1, g2] * (1 - z[g1, g2]) for g1, g2 in z.keys()))
-
-
-
-    # Restricciones para formar un tour
-    # MODEL.addConstr(gp.quicksum(z[v, 0] for v in T_index_prima) == 0)
-    # MODEL.addConstr(gp.quicksum(z[nG+1, w] for w in T_index_prima) == 0)
-    # MODEL.addConstrs(gp.quicksum(z[v , w] for w in T_index if w != v) == 1 for v in T_index)
-    # MODEL.addConstrs(gp.quicksum(z[w , v] for w in T_index if w != v) == 1 for v in T_index)
-
-    # Conectividad
-    for v in T_index_prima:
-        for w in T_index_prima:
-            if v != w:
-                MODEL.addConstr(len(T_index) - 1 >= (s[v] - s[w]) + len(T_index) * z[v, w])
-
-    # for v in range(1, nG+1):
-    #     MODEL.addConstr(s[v] - s[0] + (nG+1 - 2)*z[0, v] <= len(T_index) - 1)
-    #
-    # for v in range(1, nG+1):
-    #     MODEL.addConstr(s[0] - s[v] + (nG+1 - 1)*z[v, 0] <= 0)
-
-    # for v in range(1, nG+1):
-    #     MODEL.addConstr(-z[0,v] - s[v] + (nG+1-3)*z[v,0] <= -2, name="LiftedLB(%s)"%v)
-    #     MODEL.addConstr(-z[v,0] + s[v] + (nG+1-3)*z[0,v] <= nG+1-2, name="LiftedUB(%s)"%v)
-
-    for v in T_index_prima:
-        MODEL.addConstr(s[v] >= 1)
-        MODEL.addConstr(s[v] <= len(T_index) - 1)
-
-    MODEL.addConstr(s[0] == 0)
-    MODEL.addConstr(s[nG + 1] == nG+1)
-
-    MODEL.addConstrs((auxLR[g, dim] >=   xL[g, dim] - xR[g, dim]) for g, dim in auxLR.keys())
-    MODEL.addConstrs((auxLR[g, dim] >= - xL[g, dim] + xR[g, dim]) for g, dim in auxLR.keys())
-    MODEL.addConstrs((auxLR[g, 0]*auxLR[g, 0] + auxLR[g, 1] * auxLR[g, 1] <= dLR[g] * dLR[g] for g in dLR.keys()), name = 'LR-conic')
-
-    u_prim = 0
-    v_prim = 0
-
-    MODEL.addConstrs( ( gp.quicksum(dgLi[g, i]*vals_u[g, i] for i in grafos[g-1].aristas) + gp.quicksum(dgij[g, i, j]*vals_zgij[g, i, j] for g, i, j in dgij.keys())
-                      + gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for g in T_index_prima for i in grafos[g-1].aristas)
-                      + gp.quicksum(dgRi[g, i]*vals_v[g, i] for i in grafos[g-1].aristas))/vD <= dLR[g]/vC for g in T_index_prima)
-
-    # MODEL.addConstrs(dLR[g] <= 150 for g in dLR.keys())
-    # MODEL.addConstrs((pgLi.sum('*', '*', t) +
-    #                   pgij.sum(g, '*', '*') +
-    #                   ugi.sum(g, '*', '*')*longitudes[g-1] +
-    #                   pgRi.sum('*', '*', t))/vD <= dLR[t]/vC for t in T_index_prima for g in T_index_prima)
-    # MODEL.addConstrs((dLR[t]/vD <= 50) for t in T_index_prima)
-    # MODEL.addConstrs((pgLi[g, i, t]
-    #                   + pgij.sum(g, '*', '*') + grafos[g-1].A[i // 100 - 1, i % 100]*grafos[g-1].longaristas[i // 100 - 1, i % 100]
-    #                   + pgRi[g, i, t])/vD <= dLR[t]/vC for g, i, t in pgLi.keys())
-
-    # MODEL.addConstr(z[0, 2] + z[1, 3] + z[2, 1] + z[3, 4] == 4)
-
-    for g, i in rhogi.keys():
-        first = i // 100 - 1
-        second = i % 100
-        MODEL.addConstr(rhogi[g, i] - landagi[g, i] == maxgi[g, i] - mingi[g, i])
-        MODEL.addConstr(maxgi[g, i] + mingi[g, i] == alphagi[g, i])
-        if datos.alpha:
-            MODEL.addConstr(pgi[g, i] >= grafos[g-1].A[first, second])
-        MODEL.addConstr(maxgi[g, i] <= 1 - entrygi[g, i])
-        MODEL.addConstr(mingi[g, i] <= entrygi[g, i])
-        MODEL.addConstr(Rgi[g, i, 0] == rhogi[g, i] * grafos[g-1].V[first, 0] + (1 - rhogi[g, i]) * grafos[g-1].V[second, 0])
-        MODEL.addConstr(Rgi[g, i, 1] == rhogi[g, i] * grafos[g-1].V[first, 1] + (1 - rhogi[g, i]) * grafos[g-1].V[second, 1])
-        MODEL.addConstr(Lgi[g, i, 0] == landagi[g, i] * grafos[g-1].V[first, 0] + (1 - landagi[g, i]) * grafos[g-1].V[second, 0])
-        MODEL.addConstr(Lgi[g, i, 1] == landagi[g, i] * grafos[g-1].V[first, 1] + (1 - landagi[g, i]) * grafos[g-1].V[second, 1])
-
-    if not(datos.alpha):
-        for g in T_index_prima:
-            MODEL.addConstr(gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for i in grafos[g-1].aristas) >= grafos[g-1].alpha*grafos[g-1].longitud)
-
-    # # Fijado de variables
-    # for g in T_index_prima:
-    #     lista = [tuplas for h, tuplas in vals_zgij if h == g]
-    #     MODEL.addConstrs(zgij[g, i, j] == 1 for i, j in lista[0])
-    #     MODEL.addConstrs(ugi[h, i] == 1 for h, i in vals_u if h == g)
-    #     MODEL.addConstrs(vgi[h, i] == 1 for h, i in vals_v if h == g)
-
-    # MODEL.addConstrs(difL[g, dim] >=  xL[g, dim] - elipses[g].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difL[g, dim] >= -xL[g, dim] + elipses[g].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difL[g, 0]*difL[g, 0] + difL[g, 1]*difL[g, 1] <= elipses[g].radio*elipses[g].radio for g in T_index_prima)
-    #
-    # MODEL.addConstrs(difR[g, dim] >=  xR[g, dim] - elipses[g+1].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difR[g, dim] >= -xR[g, dim] + elipses[g+1].centro[dim] for dim in range(2) for g in T_index_prima)
-    # MODEL.addConstrs(difR[g, 0]*difR[g, 0] + difR[g, 1]*difR[g, 1] <= elipses[g+1].radio*elipses[g+1].radio for g in T_index_prima)
-
-    # Origen y destino
-    MODEL.addConstrs(xL[0, dim] == origin[dim] for dim in range(2))
-    MODEL.addConstrs(xR[0, dim] == origin[dim] for dim in range(2))
-
-    MODEL.addConstrs(xR[nG+1, dim] == dest[dim] for dim in range(2))
-    MODEL.addConstrs(xL[nG+1, dim] == dest[dim] for dim in range(2))
-
-    MODEL.update()
-
-    objective = gp.quicksum(dgLi[g, i]*vals_u[(g, i)] for g, i in dgLi.keys()) + gp.quicksum(dgRi[g, i]*vals_v[g, i] for g, i in dgRi.keys()) + gp.quicksum(dgij[g, i, j]*vals_zgij[g, i, j] for g, i, j in dgij.keys()) + gp.quicksum(pgi[g, i]*grafos[g-1].longaristas[i // 100 - 1, i % 100] for g in T_index_prima for i in grafos[g-1].aristas) + gp.quicksum(3*dLR[g] for g in dLR.keys()) + gp.quicksum(3*dRL[g1, g2]*z[g1, g2] for g1, g2 in dRL.keys())
-
-    #objective = gp.quicksum(1*dLR[g] for g in dLR.keys()) + gp.quicksum(1*pRL[g1, g2] for g1, g2 in dRL.keys())
-
-    # objective = gp.quicksum(dRL[t] + dLR[t] for t in T_index)
-
-    MODEL.setObjective(objective, GRB.MINIMIZE)
-    MODEL.Params.Threads = 6
-    # MODEL.Params.NonConvex = 2
-    MODEL.Params.timeLimit = 300
-    MODEL.Params.solutionLimit = 2
-
-    MODEL.setParam('OutputFlag', 1)
-
-    MODEL.update()
-
-
-    MODEL.write('AMDRPG-MTZ.lp')
-    MODEL.write('AMDRPG-MTZ.mps')
-
-    MODEL.optimize()
-
-    if MODEL.Status == 3:
-        MODEL.computeIIS()
-        MODEL.write('casa.ilp')
-
-    # fig, ax = plt.subplots()
-    # plt.axis([0, 100, 0, 100])
-
-    # vals_u = MODEL.getAttr('x', ugi)
-    # selected_u = gp.tuplelist((g, i)
-    #                           for g, i in ugi_index if vals_u[g, i] > 0.5)
-    selected_u = vals_u
-    #print(selected_u)
-
-    # vals_zgij = MODEL.getAttr('x', zgij)
-    # selected_zgij = gp.tuplelist((g, i, j)
-    #                           for g, i, j in zgij_index if vals_zgij[g, i, j] > 0.5)
-    selected_zgij = vals_zgij
-    #print(selected_zgij)
-
-    # vals_v = MODEL.getAttr('x', vgi)
-    # selected_v = gp.tuplelist((g, i)
-    #                           for g, i in vgi_index if vals_v[g, i] > 0.5)
-    #print(selected_v)
-    selected_v = vals_v
-
-    # valsz = MODEL.getAttr('x', z)
-
-    selected_z = gp.tuplelist(e for e in dRL.keys() if z[e] > 0)
-    #print(selected_z)
-    path = subtour(selected_z)
-    #print(path)
-
-    fig, ax = plt.subplots()
-    plt.axis([0, 100, 0, 100])
-
-    ind = 0
-    path_C = []
-    paths_D = []
-
-    for p in path:
-        path_C.append([xL[p, 0].X, xL[p, 1].X])
-        path_C.append([xR[p, 0].X, xR[p, 1].X])
-
-
-    for p in path[1:]:
-        #    if ind < nG:
-        if ind < nG:
-            path_D = []
-            path_D.append([xL[p, 0].X, xL[p, 1].X])
-            index_g = 0
-            index_i = 0
-            for g, i in selected_u:
-                if g == p:
-                    index_g = g
-                    index_i = i
-
-            count = 0
-            path_D.append([Rgi[index_g, index_i, 0].X, Rgi[index_g, index_i, 1].X])
-            path_D.append([Lgi[index_g, index_i, 0].X, Lgi[index_g, index_i, 1].X])
-            limite = sum([1 for g, i, j in selected_zgij if g == index_g])
-            while count < limite:
-                for g, i, j in selected_zgij:
-                    if index_g == g and index_i == i:
-                        count += 1
-                        index_i = j
-                        path_D.append([Rgi[index_g, index_i, 0].X, Rgi[index_g, index_i, 1].X])
-                        path_D.append([Lgi[index_g, index_i, 0].X, Lgi[index_g, index_i, 1].X])
-
-            ind += 1
-            path_D.append([xR[p, 0].X, xR[p, 1].X])
-        paths_D.append(path_D)
-    # path_C.append([xLt[nG+1, 0].X, xLt[nG+1, 1].X])
-
-
-    # for g, i in rhogi.keys():
-    #     plt.plot(Rgi[g, i, 0].X, Rgi[g, i, 1].X, 'ko', markersize=1, color='cyan')
-    #     plt.plot(Lgi[g, i, 0].X, Lgi[g, i, 1].X, 'ko', markersize=1, color='cyan')
-    #
-    # for p, i in zip(path, range(len(path))):
-        # path_C.append([xL[t, 0].X, xL[t, 1].X])
-        # path_C.append([xR[t, 0].X, xR[t, 1].X])
-        # plt.plot(xL[p, 0].X, xL[p, 1].X, 'ko', alpha = 0.3, markersize=10, color='green')
-        # ax.annotate("L" + str(i), xy = (xL[p, 0].X+0.5, xL[p, 1].X+0.5))
-        # plt.plot(xR[p, 0].X, xR[p, 1].X, 'ko', markersize=5, color='blue')
-        # ax.annotate("R" + str(i), xy = (xR[p, 0].X-1.5, xR[p, 1].X-1.5))
-
-
-    # ax.add_artist(Polygon(path_C, fill=False, animated=False,
-    #               linestyle='-', alpha=1, color='blue'))
-
-    # for path in paths_D:
-    #     ax.add_artist(Polygon(path, fill=False, closed=False,
-    #                   animated=False, alpha=1, color='red'))
-    #
-    # ax.add_artist(Polygon(path_D, fill=False, animated=False,
-    #               linestyle='dotted', alpha=1, color='red'))
-    # for g in elipses:
-    #     print(g.radio)
-    #     ax.add_artist(g.artist)
-
-    # for g in T_index_prima:
-    #     grafo = grafos[g-1]
-    #     centroide = np.mean(grafo.V, axis = 0)
-    #     nx.draw(grafo.G, grafo.pos, node_size=30,
-    #             node_color='black', alpha=1, edge_color='gray')
-    #     ax.annotate(g, xy = (centroide[0], centroide[1]))
-    #     nx.draw_networkx_labels(grafo.G, grafo.pos, font_color = 'red', font_size=5)
-    #
-    # plt.savefig('PD-MTZ-Heuristic ' + str(iter) + '.png')
-
-    # plt.show()
-    path = subtour(selected_z)
-
-    return MODEL.getAttr('x', xL), MODEL.getAttr('x', xR), path, MODEL.ObjVal
-
-
-
-
-
-
 
 def dist_grafo(point, graph):
     """Short summary.
@@ -2159,3 +422,177 @@ def dist_point_polygon(point1, point2, polygon2):
     #             minimum = np.linalg.norm(point - v)
 
     return d.X
+
+def dist_point_segment(point, segment):
+    
+    MODEL = gp.Model('Dist_Point_Segment')
+    
+    landa = MODEL.addVar(vtype = GRB.CONTINUOUS, lb = 0.0, ub = 1.0)
+    P_segm = MODEL.addVars(2, vtype = GRB.CONTINUOUS)
+    dif = MODEL.addVars(2, vtype = GRB.CONTINUOUS)
+    d = MODEL.addVar(vtype = GRB.CONTINUOUS, lb = 0.0)
+    
+    MODEL.update()
+    
+    MODEL.addConstrs(P_segm[dim] == landa*segment.V[0][dim] + (1-landa)*segment.V[1][dim] for dim in range(2))
+    
+    MODEL.addConstrs(dif[dim] >=  P_segm[dim] - point[dim] for dim in range(2))
+    MODEL.addConstrs(dif[dim] >= -P_segm[dim] + point[dim] for dim in range(2))
+    
+    MODEL.addConstr(dif[0]*dif[0] + dif[1]*dif[1] <= d*d)
+    
+    MODEL.setObjective(d, GRB.MINIMIZE)
+    
+    MODEL.update()
+    
+    MODEL.Params.OutputFlag = 0
+    
+    MODEL.optimize()
+    
+    return d.X
+
+
+def determinant(P, Q, R):
+    a11 = Q[0]-P[0]
+    a12 = R[0]-P[0]
+    a21 = Q[1]-P[1]
+    a22 = R[1]-P[1]
+    
+    return Q[0]*R[1] - Q[0]*P[1] - P[0]*R[1] - R[0]*Q[1] + R[0]*P[1] + P[0]*Q[1]  
+
+def estima_det(entorno, barrera):
+        
+    PB1x = barrera[0][0]
+    PB2x = barrera[1][0]
+    PB1y = barrera[0][1]
+    PB2y = barrera[1][1]
+    
+    if type(entorno) is Circulo:
+        
+        # print((entorno.center, entorno.radii, barrera))
+        centro = entorno.center
+        radio = entorno.radii
+        
+        a = 1
+        b = 1
+        c = 0
+        d = -2*centro[0]
+        e = -2*centro[1]
+        f = centro[0]**2 + centro[1]**2 - radio**2
+        
+        # print((a, b, c, d, e, f))
+        # Ecuacion seria entonces (x - centro[0])^2 + (y- centro[1])^2 <= radio^2
+        # x^2 + centro[0]^2 - 2x穋entro[0] + y^2 + centro[1]^2 - 2y穋entro[1] - radio^2 <= 0
+        # a = 1; b = 1; c = 0; d = -2穋entro[0]; e = -2穋entro[1]; f = centro[0]^2 + centro[1]^2 - radio^2
+        
+        if abs(PB1y - PB2y) >= 1e-1:
+            
+            m = (2*a*(PB1x - PB2x) - c*(PB2y - PB1y))/(2*b*(PB2y - PB1y) - c*(PB1x - PB2x))
+            n = (d*(PB1x - PB2x) - e*(PB2y - PB1y))/(2*b*(PB2y - PB1y) - c*(PB1x - PB2x))
+            
+            
+            # print((m, n))
+            
+            x_mas = (-(2*b*m*n+c*n+d+e*m)+np.sqrt((2*b*m*n + c*n + d + e*m)**2 - 4*(a + b*m*m + c*m)*(n*n*b + e*n + f)))/(2*(a + b*m*m + c*m))
+            x_menos = (-(2*b*m*n+c*n+d+e*m)-np.sqrt((2*b*m*n + c*n + d + e*m)**2 - 4*(a + b*m*m + c*m)*(n*n*b + e*n + f)))/(2*(a + b*m*m + c*m))
+            
+            # print((x_mas, x_menos))
+
+
+            y_mas = m*x_mas + n
+            y_menos = m*x_menos + n
+
+            # print((x_mas, y_mas))
+            # print((x_menos, y_menos))
+                            
+            eval_mas = x_mas*PB1y - x_mas*PB2y + y_mas*PB2x - y_mas*PB1x + PB1x*PB2y - PB1y*PB2x
+            
+            eval_mas = determinant([x_mas, y_mas], [PB1x, PB1y], [PB2x, PB2y])
+            eval_menos = determinant([x_menos, y_menos], [PB1x, PB1y], [PB2x, PB2y])
+            
+            # eval_menos = x_menos*PB1y - x_menos*PB2y + y_menos*PB2x - y_menos*PB1x + PB1x*PB2y - PB1y*PB2x
+            
+            L = min(eval_mas, eval_menos)
+            # U = max(eval_mas, eval_menos)
+            U = max(eval_mas, eval_menos)
+        
+        else:
+            x = centro[0]
+            y_mas = centro[1] + radio
+            y_menos = centro[1] - radio
+            
+            eval_mas = x*PB1y - x*PB2y + y_mas*PB2x - y_mas*PB1x + PB1x*PB2y - PB1y*PB2x
+            eval_menos = x*PB1y - x*PB2y + y_menos*PB2x - y_menos*PB1x + PB1x*PB2y - PB1y*PB2x
+            
+            L = min(eval_mas, eval_menos)
+            U = max(eval_mas, eval_menos)                
+        
+        # print(L)
+        # print(U)
+    if type(entorno) is Poligonal:
+        x_mas = entorno.V[0][0]
+        y_mas = entorno.V[0][1]
+        
+        x_menos = entorno.V[1][0]
+        y_menos = entorno.V[1][1]
+
+        eval_mas = determinant([x_mas, y_mas], [PB1x, PB1y], [PB2x, PB2y])
+        eval_menos = determinant([x_menos, y_menos], [PB1x, PB1y], [PB2x, PB2y])
+        
+        L = min(eval_mas, eval_menos)
+        U = max(eval_mas, eval_menos)              
+        
+    # L = -20000
+    # U = 20000
+    
+    return L, U
+    
+def estima_L(entorno, punto):
+
+    if type(punto) is Circulo:
+        centro1 = entorno.center
+        centro2 = punto.center
+        
+        dis = np.linalg.norm(np.array(centro1) - np.array(centro2)) - entorno.radii - punto.radii
+    
+    else:
+        if type(entorno) is Circulo:
+            centro = entorno.center
+            dis = np.linalg.norm(np.array(centro) - np.array(punto)) - entorno.radii
+            
+            # dist = 0
+        
+        if type(entorno) is Poligonal:
+            
+            dis = dist_point_segment(punto, entorno)
+            # dr = np.array(entorno.V[1]) - np.array(entorno.V[0])
+            #
+            # A, B = -dr[1], dr[0]
+            #
+            # C = -A*entorno.V[0][0] - B*entorno.V[0][1]
+            #
+            # dis = abs(A*punto[0] + B*punto[1] + C)/np.sqrt(A**2 + B**2)
+            
+    
+    return dis
+
+def estima_U(entorno, punto):
+    
+    if type(punto) is Circulo:
+        centro1 = entorno.center
+        centro2 = punto.center
+        
+        dis = np.linalg.norm(np.array(centro1) - np.array(centro2)) + entorno.radii + punto.radii
+    
+    else:
+        if type(entorno) is Circulo:
+            
+            dis = np.linalg.norm(np.array(entorno.center) - np.array(punto)) + entorno.radii
+            
+            # dist = 10000
+            
+        if type(entorno) is Poligonal:
+            
+            dis = max([np.linalg.norm(np.array(entorno.V[i]) - np.array(punto)) for i in range(2)])
+        
+    return dis

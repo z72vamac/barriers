@@ -1,6 +1,7 @@
 """Tenemos un conjunto E de entornos ugt un conjunto de poligonales P de las que queremos recorrer un porcentaje alfa p . Buscamos
    un tour de mínima distancia que alterne poligonal-entorno ugt que visite todas las poligonales"""
 
+" Esto permite preprocesado de buscar conjuntos de variables ys que no pueden ser uno simultaneamente"
 
 # Incluimos primero los paquetes
 import gurobipy as gp
@@ -15,7 +16,8 @@ from data import *
 from entorno import *
 import copy
 import estimacion_M as eM
-from auxiliar_functions import path2matrix
+from auxiliar_functions import path2matrix, min_dist
+from preprocessing3 import preprocessing3
 
 # Definicion de los datos
 """ P: conjunto de poligonales a agrupar
@@ -29,10 +31,21 @@ from auxiliar_functions import path2matrix
     n: dimension del problema
 """
 
-np.random.seed(129)
+np.random.seed(3)
+#
+# m = 10
 
-datos = Data([], 10, grid = True, tmax = 600, alpha = False, init = True, show = True, mode = 5)
+datos = Data([], m = 10,
+                 r = 2,
+                 capacity = 50,
+                 modo = 3,
+                 tmax = 600,
+                 init = 0,
+                 show = True,
+                 seed = 2)
 datos.generar_muestra()
+
+data = datos.mostrar_datos()
 
 n = 2
 # datos.orig = [0, 0]
@@ -50,8 +63,6 @@ vC = datos.vC
 # datos1 = Data([], nE, 3, 1, None, False, True, 0)
 # datos1.generar_muestra()
 # E = datos1.data
-
-P = datos.data
 
 # E_index = range(nE)
 T_index = range(datos.m+2)
@@ -71,15 +82,15 @@ for g in T_index_prima:
     for t in T_index_prima:
         ugt_index.append((g, t))
 
-ugt = MODEL.addVars(ugt_index, vtype=GRB.BINARY, name='y1')
+ugt = MODEL.addVars(ugt_index, vtype=GRB.BINARY, name='ugt')
 
 
 # Variable binaria ugt = 1 si se entra por el grafo g en la etapa t
 
 mugt_index = ugt_index
 
-mugt = MODEL.addVars(mugt_index, vtype=GRB.BINARY, name='mu')
-
+mugt = MODEL.addVars(mugt_index, vtype=GRB.BINARY, name='mugt')
+pgt = MODEL.addVars(mugt_index, vtype = GRB.CONTINUOUS, name = 'pgt')
 
 # Variable continua no negativa dgLt que indica la distancia desde el punto de lanzamiento hasta el grafo g.
 
@@ -104,6 +115,9 @@ for g1 in T_index_prima:
                 yggt_index.append((g1, g2, t))
 
 yggt = MODEL.addVars(yggt_index, vtype = GRB.BINARY, name = 'yggt')
+dggt = MODEL.addVars(yggt_index, vtype = GRB.CONTINUOUS, name = 'Dggt')
+difggt = MODEL.addVars(yggt_index, 2, vtype = GRB.CONTINUOUS, name = 'difggt')
+pggt = MODEL.addVars(yggt_index, vtype = GRB.CONTINUOUS, name = 'pggt')
 
 
 # Variable continua sgt que indica el orden en la etapa
@@ -164,6 +178,64 @@ for t in T_index:
 
 xRt = MODEL.addVars(xRt_index, vtype=GRB.CONTINUOUS, name='xRt')
 
+# Generando los mus de la envolvente convexa, los landas de la poligonal y las
+# variables binarias que indican qué segmento se elige
+
+landa_index = []
+rho_index = []
+gammaR_index = []
+gammaL_index = []
+muR_index = []
+muL_index = []
+u_index = []
+Rp_index = []
+Lp_index = []
+
+for p in T_index_prima:
+    comp = data[p-1]
+    if type(comp) is Poligono:
+        for mu in range(comp.num_puntos):
+            mu_index.append((c, mu))
+    if type(comp) is Poligonal:
+        u_index.append(p)
+        # landa de la variable de entrada en la poligonal c
+        rho_index.append(p)
+        # landa de la variable de salida en la poligonal c
+        landa_index.append(p)
+        for segm in range(comp.num_segmentos):
+            muR_index.append((p, segm))
+            muL_index.append((p, segm))
+        for punto in range(comp.num_puntos):
+            gammaR_index.append((p, punto))
+            gammaL_index.append((p, punto))
+        for dim in N:
+            Rp_index.append((p, dim))
+            Lp_index.append((p, dim))
+
+
+landa = MODEL.addVars(landa_index, vtype=GRB.CONTINUOUS, name='landa')
+rho = MODEL.addVars(rho_index, vtype=GRB.CONTINUOUS, name='rho')
+
+gammaR = MODEL.addVars(gammaR_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='gammaR')
+gammaL = MODEL.addVars(gammaL_index, vtype=GRB.CONTINUOUS, lb=0.0, ub=1.0, name='gammaL')
+
+muR = MODEL.addVars(muR_index, vtype=GRB.BINARY, name='muR')
+muL = MODEL.addVars(muL_index, vtype=GRB.BINARY, name='muL')
+
+pR = MODEL.addVars(muR_index, vtype=GRB.BINARY, name='pR')
+pL = MODEL.addVars(muR_index, vtype=GRB.BINARY, name='pL')
+
+u = MODEL.addVars(u_index, vtype=GRB.BINARY, name='u')
+dp = MODEL.addVars(u_index, vtype = GRB.CONTINUOUS, name = 'dp')
+
+landa_min = MODEL.addVars(u_index, vtype=GRB.CONTINUOUS, lb=0.0, name='landa_min')
+landa_max = MODEL.addVars(u_index, vtype=GRB.CONTINUOUS, lb=0.0, name='landa_max')
+
+Rp = MODEL.addVars(Rp_index, vtype = GRB.CONTINUOUS, name = 'Rp')
+Lp = MODEL.addVars(Lp_index, vtype = GRB.CONTINUOUS, name = 'Lp')
+
+beta = MODEL.addVars(T_index_prima, vtype = GRB.BINARY, name = 'beta')
+
 MODEL.update()
 
 if datos.init:
@@ -178,15 +250,41 @@ MODEL.addConstrs(mugt.sum(g, '*') == 1 for g in T_index_prima)
 #     MODEL.addConstrs(yggt[g1, g2, t] + yggt[g2, g1, t] <= 1 for g1 in T_index_prima for g2 in T_index_prima if g1 != g2)
 # for g in T_index_prima:
 #     for t1 in T_index_prima:
-#         MODEL.addConstr(gp.quicksum(mugt[g, t2] for t2 in T_index_prima if t2 < t1) <= mugt[g, t1])
-# En cada etapa hay que visitar/salir un segmento de un grafo
+#         MODEL.addConstr(gp.quicksum(mugt[g, t2] for t2 in T_index_prima if t2 > t1) <= gp.quicksum(mugt[g, t2] for t2 in T_index_prima if t1 <= t2))
+
 # for t in T_index_prima:
-#     MODEL.addConstrs(ugt[g1, t] + ugt[g2, t] <= 1 for g1 in T_index_prima for g2 in T_index_prima if g1 != g2)
-#     MODEL.addConstrs(vgt[g1, t] + vgt[g2, t] <= 1 for g1 in T_index_prima for g2 in T_index_prima if g1 != g2)
+#     for m in T_index_prima:
+#         print(datos.m)
+#         print(m)
+#         MODEL.addConstr(gp.quicksum(mugt[g, datos.m - j + 1] for j in T_index_prima for g in T_index_prima if j < m and datos.m - j < t) <= m - mugt.sum('*', t))
+
+for t in T_index_prima:
+    MODEL.addConstr(datos.m*(1 - beta[t]) >= datos.m - gp.quicksum(mugt[g, t1] for g in T_index_prima for t1 in T_index_prima if t1 <= t))
+    # MODEL.addConstr(gp.quicksum(mugt[g, t] for g in T_index_prima for t1 in T_index_prima if t1 > t) <= datos.m*(1 - beta[t]))
+
+for t in T_index_prima[0:-1]:
+    MODEL.addConstr(beta[t] <= beta[t+1])
+
+for t in T_index_prima:
+    MODEL.addConstr(mugt.sum('*', t) >= 1 - beta[t])
 
 
 MODEL.addConstrs(ugt.sum('*', t) <= 1 for t in T_index_prima)
 MODEL.addConstrs(vgt.sum('*', t) <= 1 for t in T_index_prima)
+
+# MODEL.addConstrs(gp.quicksum(ugt[g, t1] for g in T_index_prima for t1 in T_index_prima if t1 >= t)  >= 1 - beta[t] for t in T_index_prima)
+# MODEL.addConstrs(gp.quicksum(vgt[g, t1] for g in T_index_prima for t1 in T_index_prima if t1 >= t)  >= 1 - beta[t] for t in T_index_prima)
+
+## PREPROCESADO
+prepro = True
+if prepro:
+    numero = 2
+    conjunto = preprocessing3(datos, numero)
+    print(conjunto)
+
+    for lista in conjunto:
+        for t in T_index_prima:
+            MODEL.addConstr(gp.quicksum(mugt[g, t] for g in lista) <= numero-1)
 
 # for g in T_index_prima:
 #     for t in T_index_prima:
@@ -204,7 +302,28 @@ def powerset(iterable):
 
 for t in T_index_prima:
     restricciones = MODEL.addConstrs(gp.quicksum(yggt[g1, g2, t] for g1, g2 in permutations(set, 2)) <= len(set) - 1 for set in list(powerset(T_index_prima)))
-    restricciones.Lazy = 3
+    restricciones.Lazy = 0
+
+MODEL.addConstrs(difggt[g1, g2, t, dim] >=  Lp[g1, dim] - Rp[g2, dim] for g1, g2, t, dim in difggt.keys())
+MODEL.addConstrs(difggt[g1, g2, t, dim] >= -Lp[g1, dim] + Rp[g2, dim] for g1, g2, t, dim in difggt.keys())
+MODEL.addConstrs(gp.quicksum(difggt[g1, g2, t, dim]*difggt[g1, g2, t, dim] for dim in N) <= dggt[g1, g2, t] * dggt[g1, g2, t] for g1, g2, t in dggt.keys())
+
+# BigM = 10000
+# SmallM = 0
+
+# MODEL.addConstr(beta[2] == 0)
+
+for g1, g2, t in yggt.keys():
+
+    comp1 = data[g1-1]
+    comp2 = data[g2-1]
+
+    SmallM = min_dist(comp1, comp2)[0]
+    # SmallM = min([np.linalg.norm(u - v) for u in comp1.V for v in comp2.V])
+    BigM = max([np.linalg.norm(u - v) for u in comp1.V for v in comp2.V])
+
+    MODEL.addConstr(pggt[g1, g2, t] >= SmallM * yggt[g1, g2, t])
+    MODEL.addConstr(pggt[g1, g2, t] >= dggt[g1, g2, t] - BigM * (1 - yggt[g1, g2, t]))
 
 
 # MODEL.addConstrs(ugt[g, t] <= yggt.sum(g, '*') for g, t in ugt.keys())
@@ -223,31 +342,31 @@ for t in T_index_prima:
 # MODEL.addConstrs(ugt.sum('*', t) == vgt.sum('*', t) for t in T_index_prima)
 
 
-MODEL.addConstrs((difgLt[g, t, dim] >=  xLt[t, dim] - P[g-1].V[dim]) for g, t, dim in difgLt.keys())
-MODEL.addConstrs((difgLt[g, t, dim] >= -xLt[t, dim] + P[g-1].V[dim]) for g, t, dim in difgLt.keys())
+MODEL.addConstrs((difgLt[g, t, dim] >=  xLt[t, dim] - Rp[g, dim]) for g, t, dim in difgLt.keys())
+MODEL.addConstrs((difgLt[g, t, dim] >= -xLt[t, dim] + Rp[g, dim]) for g, t, dim in difgLt.keys())
 
 MODEL.addConstrs(difgLt[g, t, 0]*difgLt[g, t, 0] + difgLt[g, t, 1]*difgLt[g, t, 1] <= dgLt[g, t]*dgLt[g, t] for g, t in dgLt.keys())
 
 SmallM = 0
-BigM = max([np.linalg.norm(np.array(P[q].V) - np.array(P[p].V)) for p in range(datos.m) for q in range(datos.m)])
-# BigM = 10000
+# BigM = max([np.linalg.norm(np.array(comp[p].V) - np.array(P[p].V)) for p in range(datos.m) for q in range(datos.m)])
+BigM = 10000
 
 MODEL.addConstrs(pgLt[g, t] >= SmallM * ugt[g, t] for g, t in pgLt.keys())
 MODEL.addConstrs(pgLt[g, t] >= dgLt[g, t] - BigM * (1 - ugt[g, t]) for g, t in pgLt.keys())
 
-MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgLt[g, t] for g, t in ugt.keys()))
-MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*ugt[g, t] for g, t in ugt.keys()))
-
-MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgRt[g, t] for g, t in ugt.keys()))
-MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*vgt[g, t] for g, t in ugt.keys()))
+# MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgLt[g, t] for g, t in ugt.keys()))
+# MODEL.addConstr(gp.quicksum(BigM*(1-ugt[g, t]) - dgLt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*ugt[g, t] for g, t in ugt.keys()))
+#
+# MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(dgRt[g, t] for g, t in ugt.keys()))
+# MODEL.addConstr(gp.quicksum(BigM*(1-vgt[g, t]) - dgRt[g, t] for g, t in ugt.keys()) <= gp.quicksum(BigM*vgt[g, t] for g, t in ugt.keys()))
 
 
 # MODEL.addConstrs(BigM*(1 - ugt[g, t]) <= dgLt[g, t] for g, t in pgLt.keys())
 # MODEL.addConstrs(BigM*(1 - vgt[g, t]) <= dgRt[g, t] for g, t in pgLt.keys())
 
 
-MODEL.addConstrs((difgRt[g, t, dim] >=  P[g-1].V[dim] - xRt[t, dim]) for g, t, dim in difgRt.keys())
-MODEL.addConstrs((difgRt[g, t, dim] >= -P[g-1].V[dim] + xRt[t, dim]) for g, t, dim in difgRt.keys())
+MODEL.addConstrs((difgRt[g, t, dim] >=   Lp[g, dim] - xRt[t, dim]) for g, t, dim in difgRt.keys())
+MODEL.addConstrs((difgRt[g, t, dim] >=  -Lp[g, dim] + xRt[t, dim]) for g, t, dim in difgRt.keys())
 
 MODEL.addConstrs(difgRt[g, t, 0]*difgRt[g, t, 0] + difgRt[g, t, 1]*difgRt[g, t, 1] <= dgRt[g, t]*dgRt[g, t] for g, t in dgRt.keys())
 
@@ -262,9 +381,68 @@ MODEL.addConstrs((difLRt[t, dim] >=   xLt[t, dim] - xRt[t, dim]) for t, dim in d
 MODEL.addConstrs((difLRt[t, dim] >= - xLt[t, dim] + xRt[t, dim]) for t, dim in difLRt.keys())
 MODEL.addConstrs(difLRt[t, 0]*difLRt[t, 0] + difLRt[t, 1] * difLRt[t, 1] <= dLRt[t] * dLRt[t] for t in dLRt.keys())
 
-MODEL.addConstrs((pgRt.sum('*', t) + gp.quicksum(np.linalg.norm(P[g1-1].V - P[g2-1].V)*yggt[g1, g2, t] for g1 in T_index_prima for g2 in T_index_prima if g1 != g2) + pgLt.sum('*', t))/vD <= dLRt[t]/vC for t in T_index_prima)
+MODEL.addConstrs(pgt[g, t] >= SmallM * mugt[g, t] for g, t in mugt.keys())
+MODEL.addConstrs(pgt[g, t] >= dp[g] - BigM * (1 - mugt[g, t]) for g, t in mugt.keys())
 
-MODEL.addConstrs((dLRt[t]/vC <= 40) for t in dLRt.keys())
+
+MODEL.addConstrs((pgLt.sum('*', t) + pgt.sum('*', t) + gp.quicksum(pggt[g1, g2, t] for g1 in T_index_prima for g2 in T_index_prima if g1 != g2) + pgRt.sum('*', t))/vD <= dLRt[t]/vC for t in T_index_prima)
+#
+# MODEL.addConstrs((pgLt.sum('*', t) + pgt.sum('*', t) + gp.quicksum(pggt[g1, g2, t] for g1 in T_index_prima for g2 in T_index_prima if g1 != g2) + pgRt.sum('*', t))/vD <= dLRt[t]/vC + BigM*(1 - ugt.sum('*', t)) for t in T_index_prima)
+
+MODEL.addConstrs((dLRt[t]/vC <= datos.capacity) for t in dLRt.keys())
+
+for p in T_index_prima:
+    comp = data[p-1]
+    if type(comp) is Poligonal:
+        MODEL.addConstr(rho[p] - landa[p] == landa_max[p] - landa_min[p], name='u0')
+        # si u = 0, entonces landa0 >= landa1
+        MODEL.addConstr(landa_max[p] + landa_min[p] >= comp.alpha * comp.num_segmentos, name='u1')
+        MODEL.addConstr(landa_max[p] <= comp.num_segmentos * (1 - u[p]), name='u2')
+        MODEL.addConstr(landa_min[p] <= comp.num_segmentos * u[p], name='u3')
+        MODEL.addConstr(dp[p] == (landa_max[p] + landa_min[p])*comp.longitud)
+
+        print(comp.alpha*comp.longitud)
+        MODEL.addConstrs(rho[p] - punto >= gammaR[p, punto] - comp.num_puntos*(1 - muR[p, punto-1]) for punto in range(1, comp.num_puntos))
+        MODEL.addConstrs(rho[p] - punto <= gammaR[p, punto] + comp.num_puntos*(1 - muR[p, punto-1]) for punto in range(1, comp.num_puntos))
+        MODEL.addConstr(gammaR[p, 0] <= muR[p, 0])
+        MODEL.addConstrs(gammaR[p, punto] <= muR[p, punto-1] + muR[p, punto] for punto in range(1, comp.num_segmentos))
+        MODEL.addConstr(gammaR[p, comp.num_segmentos] <= muR[p, comp.num_segmentos-1])
+        MODEL.addConstr(muR.sum(p, '*') == 1)
+        MODEL.addConstr(gammaR.sum(p, '*') == 1)
+        MODEL.addConstrs(Rp[p, dim] == gp.quicksum(gammaR[p, punto]*comp.V[punto][dim] for punto in range(comp.num_puntos)) for dim in N)
+
+        MODEL.addConstrs(landa[p] - punto >= gammaL[p, punto] - comp.num_puntos*(1 - muL[p, punto-1]) for punto in range(1, comp.num_puntos))
+        MODEL.addConstrs(landa[p] - punto <= gammaL[p, punto] + comp.num_puntos*(1 - muL[p, punto-1]) for punto in range(1, comp.num_puntos))
+        MODEL.addConstr(gammaL[p, 0] <= muL[p, 0])
+        MODEL.addConstrs(gammaL[p, punto] <= muL[p, punto-1] + muL[p, punto] for punto in range(1, comp.num_segmentos))
+        MODEL.addConstr(gammaL[p, comp.num_segmentos] <= muL[p, comp.num_segmentos-1])
+        MODEL.addConstr(muL.sum(p, '*') == 1)
+        MODEL.addConstr(gammaL.sum(p, '*') == 1)
+        MODEL.addConstrs(Lp[p, dim] == gp.quicksum(gammaL[p, punto]*comp.V[punto][dim] for punto in range(comp.num_puntos)) for dim in N)
+
+        # MODEL.addConstr(rho[p] == gp.quicksum(j*muR[p, j] + gammaR[p, j] for j in range(comp.num_segmentos)))
+        # # MODEL.addConstr(gammaR[p, 0] <= muR[p, 0])
+        # # MODEL.addConstrs(gammaR[p, j] <= muR[p, j-1] + muR[p, j] for j in range(1, comp.num_segmentos))
+        # # MODEL.addConstr(gammaR[p, comp.num_segmentos-1] <= muR[p, comp.num_segmentos-1])
+        # MODEL.addConstrs(gammaR[p, j] <= muR[p, j] for j in range(comp.num_segmentos))
+        # MODEL.addConstrs(pR[p, j] >= muR[p, j] + gammaR[p, j] - 1 for j in range(comp.num_segmentos))
+        # MODEL.addConstrs(pR[p, j] <= muR[p, j] for j in range(comp.num_segmentos))
+        # MODEL.addConstrs(pR[p, j] <= gammaR[p, j] for j in range(comp.num_segmentos))
+        # MODEL.addConstr(muR.sum(p, '*') == 1)
+        # # MODEL.addConstr(gammaR.sum(p, '*') == 1)
+        # MODEL.addConstrs(Rp[p, dim] == gp.quicksum(muR[p, j]*comp.V[j][dim] + pR[p, j] * (comp.V[j+1][dim] - comp.V[j][dim]) for j in range( comp.num_segmentos)) for dim in N)
+        #
+        # MODEL.addConstr(landa[p] == gp.quicksum(j*muL[p, j] + gammaL[p, j] for j in range(comp.num_segmentos)))
+        # # MODEL.addConstr(gammaL[p, 0] <= muL[p, 0])
+        # # MODEL.addConstrs(gammaL[p, j] <= muL[p, j-1] + muL[p, j] for j in range(1, comp.num_segmentos))
+        # # MODEL.addConstr(gammaL[p, comp.num_segmentos-1] <= muL[p, comp.num_segmentos-1])
+        # MODEL.addConstrs(gammaL[p, j] <= muL[p, j] for j in range(comp.num_segmentos))
+        # MODEL.addConstrs(pL[p, j] >= muL[p, j] + gammaL[p, j] - 1 for j in range(comp.num_segmentos))
+        # MODEL.addConstrs(pL[p, j] <= muL[p, j] for j in range(comp.num_segmentos))
+        # MODEL.addConstrs(pL[p, j] <= gammaL[p, j] for j in range(comp.num_segmentos))
+        # MODEL.addConstr(muL.sum(p, '*') == 1)
+        # # MODEL.addConstr(gammaL.sum(p, '*') == 1)
+        # MODEL.addConstrs(Lp[p, dim] == gp.quicksum(muL[p, j]*comp.V[j][dim] + pL[p, j] * (comp.V[j+1][dim] - comp.V[j][dim]) for j in range( comp.num_segmentos)) for dim in N)
 
 # MODEL.addConstrs((pgRt.sum('*', t) + gp.quicksum(np.linalg.norm(P[g1-1].V - P[g2-1].V)*yggt[g1, g2, t] for g1 in T_index_prima for g2 in T_index_prima if g1 != g2) + pgLt.sum('*', t))/vD <= 30 for t in T_index_prima)
 
@@ -283,16 +461,18 @@ MODEL.update()
 # + gp.quicksum(0.5*pgLt[index] for index in pgLt.keys()) + gp.quicksum(0.5*pgRt[index] for index in pgRt.keys())
 # objective = gp.quicksum(dRLt[index] for index in dRLt.keys()) + gp.quicksum(dLRt[index] for index in dLRt.keys()) + gp.quicksum(pgLt[index] for index in dgLt.keys()) + gp.quicksum(pgRt[index] for index in dgRt.keys())
 
-objective = gp.quicksum(3*dLRt[index] for index in dLRt.keys()) + gp.quicksum(3*dRLt[index] for index in dRLt.keys()) + gp.quicksum(pgRt[index] for index in pgRt.keys()) + gp.quicksum(pgLt[index] for index in pgLt.keys()) + gp.quicksum(np.linalg.norm(P[p-1].V - P[q-1].V)*yggt[p, q, t] for p, q, t in yggt_index)
+objective = gp.quicksum(3*dLRt[index] for index in dLRt.keys()) + gp.quicksum(3*dRLt[index] for index in dRLt.keys()) + gp.quicksum(pgRt[index] for index in pgRt.keys()) + gp.quicksum(pgLt[index] for index in pgLt.keys()) + gp.quicksum(pggt[g1, g2, t] for g1, g2, t in yggt.keys()) + gp.quicksum(pgt[index] for index in pgt.keys())
 
 MODEL.setObjective(objective, GRB.MINIMIZE)
 
 MODEL.update()
 
-MODEL.setParam('TimeLimit', datos.tmax)
+# MODEL.setParam('TimeLimit', datos.tmax)
 MODEL.write('aver.lp')
 
-MODEL.Params.NumericFocus = 0
+MODEL.Params.Threads = 6
+MODEL.Params.TimeLimit = datos.tmax
+# MODEL.Params.SolutionLimit = 3
 
 # Optimizamos
 MODEL.optimize()
@@ -332,6 +512,12 @@ selected_mugt = gp.tuplelist(e for e in vals_mugt if vals_mugt[e] > 0)
 print('mugt')
 print(selected_mugt)
 
+vals_beta = MODEL.getAttr('x', beta)
+
+selected_beta = gp.tuplelist(e for e in vals_beta if vals_beta[e] > 0)
+
+print('beta')
+print(selected_beta)
 
 
 path = []
@@ -343,7 +529,7 @@ for t in T_index_prima:
         path.append(tripleta[0][1])
 
 # path.append(nG+1)
-print(path)
+# print(path)
 
 ind = 0
 path_C = []
@@ -363,17 +549,20 @@ for t in path:
             index_g = g
             index_t = ti
 
-    count = 0
-    path_D.append([P[index_g-1].V[0], P[index_g-1].V[1]])
     # path_D.append([Lgi[index_g, index_i, 0].X, Lgi[index_g, index_i, 1].X])
-    limite = sum([1 for g1, g2, ti in selected_yggt if ti == index_t])
+    limite = sum([1 for g, ti in selected_mugt if ti == index_t])
+    path_D.append([Rp[index_g, 0].X, Rp[index_g, 1].X])
+    path_D.append([Lp[index_g, 0].X, Lp[index_g, 1].X])
+    count = 1
     while count < limite:
         for g1, g2, ti in selected_yggt:
             if index_t == ti and index_g == g1:
                 count += 1
                 index_g = g2
+                print(index_g)
                 # path_D.append([Rgi[index_g, index_i, 0].X, Rgi[index_g, index_i, 1].X])
-                path_D.append([P[index_g-1].V[0], P[index_g-1].V[1]])
+                path_D.append([Rp[index_g, 0].X, Rp[index_g, 1].X])
+                path_D.append([Lp[index_g, 0].X, Lp[index_g, 1].X])
 
     path_D.append([xRt[t, 0].X, xRt[t, 1].X])
     paths_D.append(path_D)
@@ -399,11 +588,10 @@ ax.add_artist(Polygon(path_C, fill=False, animated=False,
               linestyle='-', alpha=1, color='blue'))
 
 for pathd in paths_D:
-    ax.add_artist(Polygon(pathd, fill=False, closed=False, lw = 1,
-                  animated=False, alpha=1, color='red'))
+    ax.add_artist(Polygon(pathd, fill=False, closed=False, lw = 1, animated=False, alpha=1, color='red'))
 
 for g in T_index_prima:
-    plt.plot(P[g-1].V[0], P[g-1].V[1], 'ko', markersize=5, color='black')
+    ax.add_artist(data[g-1].artist)
 
 # polygon_camion = Polygon(path_camion, fill=False, linestyle=':', alpha=1, color='red')
 # ax.add_patch(polygon_camion)
