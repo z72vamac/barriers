@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import Delaunay
 import networkx as nx
-from entorno import Circulo
+from neighborhood import Circle
 from matplotlib.patches import Circle
 
 
@@ -39,7 +39,7 @@ edges = []
 from shapely.geometry import Polygon
 
 # pgon = Polygon([Vx[68], Vx[88], Vx[58]], [Vy[68], Vy[88], Vy[58]])
-def genera_circulo(P1, P2, P3):    
+def genera_Circle(P1, P2, P3):    
     pgon = Polygon([P1, P2, P3])
     area = pgon.area
     semi_perimetro = pgon.exterior.length / 2
@@ -53,17 +53,17 @@ def genera_circulo(P1, P2, P3):
     
     radio_aleatorio = np.random.uniform(0, radio_circunferencia)
     
-    circulo = Circulo(center = incentro, radii = radio_aleatorio)
+    Circle = Circle(center = incentro, radii = radio_aleatorio)
     
-    return circulo
+    return Circle
 
-circulos = []
+Circles = []
 
 for lista in tri.simplices:
     a, b, c = tuple(lista)
-    circulo = genera_circulo([Vx[a], Vy[a]], [Vx[b], Vy[b]], [Vx[c], Vy[c]])
+    Circle = genera_Circle([Vx[a], Vy[a]], [Vx[b], Vy[b]], [Vx[c], Vy[c]])
     
-    circulos.append(circulo)
+    Circles.append(Circle)
 
 
 def no_cortan(barrier1, barrier2):
@@ -78,13 +78,13 @@ def no_cortan(barrier1, barrier2):
 def cortan(barrier1, barrier2):
     return not(no_cortan(barrier1, barrier2))
 
-def se_ven(circulo1, circulo2):
+def se_ven(Circle1, Circle2):
     
     # true si se ven, false si no se ven
     
-    def genera_circunferencia(circulo):
-        centro = circulo.center
-        radio = circulo.radii
+    def genera_circunferencia(Circle):
+        centro = Circle.center
+        radio = Circle.radii
         angle = np.linspace(0, 2*np.pi, 10)
         
         x = centro[0] + radio*np.cos(angle)
@@ -92,8 +92,8 @@ def se_ven(circulo1, circulo2):
         
         return zip(x, y)
     
-    circunferencia1 = genera_circunferencia(circulo1)
-    circunferencia2 = genera_circunferencia(circulo2)
+    circunferencia1 = genera_circunferencia(Circle1)
+    circunferencia2 = genera_circunferencia(Circle2)
 
     # flag = True indica que siguen cortando
     flag = True
@@ -119,25 +119,25 @@ def se_ven(circulo1, circulo2):
                 
 def sistema(lista):
     # filtro que dice true si todas las bolas que lo forman no se ven entre ellas
-    return all([not(se_ven(circulos[i], circulos[j])) for i in lista for j in lista if i != j])
+    return all([not(se_ven(Circles[i], Circles[j])) for i in lista for j in lista if i != j])
 
-# print(se_ven(circulos[i], circulos[2]))
+# print(se_ven(Circles[i], Circles[2]))
 # for i in range(4000):
-#     lista = np.random.choice(len(circulos), 10, replace = False) 
+#     lista = np.random.choice(len(Circles), 10, replace = False) 
 #     if sistema(lista):
 #         print(lista)
         # break
 
-lista = np.random.choice(len(circulos), 10, replace = False)
+lista = np.random.choice(len(Circles), 10, replace = False)
 
 N = nx.Graph()
 
 for i in lista:
-    circulo = circulos[i]
-    N.add_node(i, pos = circulo.center, rad = circulo.radii)
+    Circle = Circles[i]
+    N.add_node(i, pos = Circle.center, rad = Circle.radii)
     
-# for circulo, i in zip(circulos, range(len(circulos))):
-#     N.add_node(i, pos = circulo.center, rad = circulo.radii)
+# for Circle, i in zip(Circles, range(len(Circles))):
+#     N.add_node(i, pos = Circle.center, rad = Circle.radii)
 
 N.pos = nx.get_node_attributes(N, 'pos')
 N.rad = nx.get_node_attributes(N, 'rad')
@@ -199,7 +199,7 @@ nx.draw(G, G.pos, node_size=10, node_color = 'red', edge_color = 'red')
 # nx.draw(N, N.pos, node_size = 1, with_labels = True)
 # ax.triplot(Vx, Vy, tri.simplices)
 
-# ax.add_artist(circulos[0].figura)
+# ax.add_artist(Circles[0].figura)
 
 
 

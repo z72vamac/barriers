@@ -1,7 +1,7 @@
 import gurobipy as gp
 import pdb
 from HSPPS_new import HSPPS
-from entorno import Circulo
+from neighborhood import Circle
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ else:
 for nP in [5, 10, 20, 30, 50, 80]:
     for instance in range(10):
         
-        print('\n\nResolviendo la instancia ' + str(instance) + ' con un numero ' + str(nP) + ' de entornos.\n\n')
+        print('\n\nResolviendo la instancia ' + str(instance) + ' con un numero ' + str(nP) + ' de neighborhoods.\n\n')
         
         segments = np.genfromtxt('./instancias/segmentos'+ str(nP) + '-' + str(instance) + '.csv', delimiter = ',')
 
@@ -26,7 +26,7 @@ for nP in [5, 10, 20, 30, 50, 80]:
             
         bolas = np.genfromtxt('./instancias/bolas' + str(nP) + '-' + str(instance) + '.csv', delimiter = ',')
 
-        N = [Circulo(center = [centro1, centro2], radii = radio) for centro1, centro2, radio in bolas]
+        N = [Circle(center = [centro1, centro2], radii = radio) for centro1, centro2, radio in bolas]
 
         resultados = HSPPS(barriers, N, timeLimit = 3600)
         

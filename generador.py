@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import Delaunay
 import networkx as nx
-from entorno import Circulo
+from neighborhood import Circle
 
 
 def no_cortan(barrier1, barrier2):
@@ -115,7 +115,7 @@ def generador(nP, index):
     
     # plt.axis([0, 100, 0, 100])
     
-    circulos = []
+    Circles = []
     bolas = []
     
     def ve(punto, segmento):
@@ -131,13 +131,13 @@ def generador(nP, index):
         r_min = min([interseccion_long(v, barrera) for barrera in barreras if ve(v, barrera)])
         upper_bound = min(r_min, min([d_PB(v, barrera) for barrera in barreras]))
         radii = np.random.uniform(upper_bound, upper_bound)
-        circulos.append(Circulo(center = v, radii = radii))
+        Circles.append(Circle(center = v, radii = radii))
         bolas.append([v[0], v[1], radii])
     
     np.savetxt('instancias/bolas' + str(nP) + '-' + str(index) + '.csv', bolas, delimiter = ",")
     
         
-    # for c in circulos:
+    # for c in Circles:
     #     ax.add_artist(c.figura)
     
     

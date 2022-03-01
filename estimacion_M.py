@@ -6,7 +6,7 @@ Created on Fri Dec 13 00:16:23 2019
 """
 from gurobipy import *
 import numpy as np
-from entorno import *
+from neighborhood import *
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 

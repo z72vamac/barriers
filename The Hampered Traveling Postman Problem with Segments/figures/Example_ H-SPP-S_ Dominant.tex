@@ -1,0 +1,81 @@
+\begin{figure}[h!]
+	\centering
+	\definecolor{qqffqq}{rgb}{0,1,0}
+	\definecolor{qqqqff}{rgb}{0,0,1}
+	\definecolor{ffqqqq}{rgb}{1,0,0}
+	\begin{tikzpicture}[line cap=round,line join=round,>=triangle 45,x=1cm,y=1cm, scale=1]
+		\begin{axis}[
+			x=0.1cm,y=0.1cm,
+			axis lines=middle,
+			xmin=-5,
+			xmax=105,
+			ymin=-5,
+			ymax=105,
+			xtick={-30,-20,...,160},
+			ytick={-30,-20,...,100},]
+			\clip(-30.537729395742623,-31.914778968980123) rectangle (160.8609499148995,105.01143884235292);
+			\draw [line width=1pt,color=ffqqqq] (20,80)-- (40,30);
+			\draw [line width=1pt,color=ffqqqq] (70,95)-- (40,70);
+			\draw [line width=1pt,color=ffqqqq] (95,60)-- (60,70);
+			\draw [line width=1pt,color=ffqqqq] (60,50)-- (90,10);
+			\draw [line width=1pt,color=ffqqqq] (10,70)-- (20,50);
+			\draw [rotate around={0:(20,10)},line width=1pt,color=qqqqff,fill=qqqqff,fill opacity=0.25] (20,10) ellipse (1cm and 1cm);
+			\draw [rotate around={0:(90,90)},line width=1pt,color=qqffqq,fill=qqffqq,fill opacity=0.25] (90,90) ellipse (0.5cm and 0.5cm);
+			\draw [line width=1pt,dashed,color=qqffqq] (90,90)-- (70,95);
+			\draw [line width=1pt,dashed,color=qqffqq] (90,90)-- (40,70);
+			\draw [line width=1pt,dashed,color=qqffqq] (90,90)-- (60,70);
+			\draw [line width=1pt,dashed,color=qqffqq] (90,90)-- (95,60);
+			\draw [color=qqqqff](3.9007872968296593,8.815389811658244) node[anchor=north west] {$N_S$};
+			\draw [color=qqffqq](95.46088215737039,101.20333363115502) node[anchor=north west] {$N_T$};
+			\draw [line width=1pt,dashed,color=qqqqff] (20,10)-- (20,50);
+			\draw [line width=1pt,dashed,color=qqqqff] (20,10)-- (10,70);
+			\draw [line width=1pt,dashed,color=qqqqff] (20,10)-- (40,30);
+			\draw [line width=1pt,dashed,color=qqqqff] (20,10)-- (90,10);
+			\draw [color=ffqqqq](16.677872565917347,61.07160814338772) node[anchor=north west] {$B_1$};
+			\draw [color=ffqqqq](29.714375639097646,60.3390859894584) node[anchor=north west] {$B_2$};
+			\draw [color=ffqqqq](74.06403823913686,36.399818766133066) node[anchor=north west] {$B_3$};
+			\draw [color=ffqqqq](4.118581491655804,76.78897352280485) node[anchor=north west] {$P_{B_1}^1$};
+			\draw [color=ffqqqq](19.282739642341388,50.779794915196824) node[anchor=north west] {$P^2_{B_1}$};
+			\draw [color=ffqqqq](14.416478565376725,86.81939275045512) node[anchor=north west] {$P^1_{B_2}$};
+			\draw [color=ffqqqq](39.02322363477266,30.64904507561358) node[anchor=north west] {$P^2_{B_2}$};
+			\draw [color=ffqqqq](56.823884858638536,58.199263220893) node[anchor=north west] {$P^1_{B_3}$};
+			\draw [color=ffqqqq](90.51392577248326,11.65811800459572) node[anchor=north west] {$P^2_{B_3}$};
+			\draw [color=qqqqff](3.3,26.96818276937678) node[anchor=north west] {$P_S(P^1_{B_1})$};
+			\draw [color=qqqqff](19,26.96818276937678) node[anchor=north west] {$P_S(P^2_{B_1})$};
+			\draw [color=qqqqff](29.395237945334426,20.15358154010465) node[anchor=north west] {$P_S(P^2_{B_2})$};
+			\draw [color=qqqqff](29.528976868369764,9.989423389419034) node[anchor=north west] {$P_S(P^2_{B_3})$};
+			\draw [color=ffqqqq](75.40751131502027,70.77072198621468) node[anchor=north west] {$B_4$};
+			\draw [color=ffqqqq](48.18859855456425,86.55191490438445) node[anchor=north west] {$B_5$};
+			\draw [color=ffqqqq](36.61713978924261,69.79505736833491) node[anchor=north west] {$P_{B_5}^1$};
+			\draw [color=ffqqqq](64.56857470362796,102.33310782255423) node[anchor=north west] {$P_{B_5}^2$};
+			\draw [color=ffqqqq](56.36492439630993,68.91662860031013) node[anchor=north west] {$P^1_{B_4}$};
+			\draw [color=ffqqqq](95.99722161693207,64.75855429515457) node[anchor=north west] {$P^2_{B_4}$};
+			\draw [color=qqffqq](73.30507777680826,99.0206828488282) node[anchor=north west] {$P_T(P^2_{B_5})$};
+			\draw [color=qqffqq](69.59899393127822,92.53886105615131) node[anchor=north west] {$P_T(P^1_{B_5})$};
+			\draw [color=qqffqq](78.34976762179768,84.75556521170249) node[anchor=north west] {$P_T(P^1_{B_4})$};
+			\draw [color=qqffqq](90.72365992533135,86.95921551902052) node[anchor=north west] {$P_T(P^2_{B_4})$};
+			\begin{scriptsize}
+				\draw [color=ffqqqq] (20,80) circle (2.5pt);
+				\draw [color=ffqqqq] (40,30) circle (2.5pt);
+				\draw [color=ffqqqq] (70,95) circle (2.5pt);
+				\draw [color=ffqqqq] (40,70) circle (2.5pt);
+				\draw [color=ffqqqq] (95,60) circle (2.5pt);
+				\draw [color=ffqqqq] (60,70) circle (2.5pt);
+				\draw [color=ffqqqq] (60,50) circle (2.5pt);
+				\draw [color=ffqqqq] (90,10) circle (2.5pt);
+				\draw [color=ffqqqq] (10,70) circle (2.5pt);
+				\draw [color=ffqqqq] (20,50) circle (2.5pt);
+				\draw [fill=qqqqff] (30,10) circle (2.5pt);
+				\draw [fill=qqqqff] (27.045826326461373,17.045826326461373) circle (2.5pt);
+				\draw [fill=qqqqff] (20,20) circle (2.5pt);
+				\draw [fill=qqqqff] (18.34950111294038,19.90299332235771) circle (2.5pt);
+				\draw [fill=qqffqq] (90.8269697597078,85.03818144175327) circle (2.5pt);
+				\draw [fill=qqffqq] (85.87491985505903,87.24994657003936) circle (2.5pt);
+				\draw [fill=qqffqq] (85.38574625287497,88.15429850114998) circle (2.5pt);
+				\draw [fill=qqffqq] (85.12641867890856,91.21839533027286) circle (2.5pt);
+			\end{scriptsize}
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Problem data of the \SPPN, \TSPN \ and \TSPVN}
+	\label{fig:initialdata}
+\end{figure}

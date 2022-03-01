@@ -1,5 +1,5 @@
 # Con la formulacion nueva
-# Shortest path por entornos con barriers
+# Shortest path por neighborhoods con barriers
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
 from matplotlib.collections import PatchCollection
 from data import *
-from entorno import Circulo, Poligonal
+from neighborhood import Circle, Poligonal
 import copy
 import estimacion_M as eM
 from auxiliar_functions import *
@@ -35,16 +35,16 @@ def HSPPS(barriers, N, prepro = True, log = False, timeLimit = 7200, init = Fals
     
         return ((det1*det2) >= 0) or ((det3*det4) >= 0)
 
-    def no_ve(entorno, punto):
-        if type(entorno) is Circulo:
-            centro = entorno.center
+    def no_ve(neighborhood, punto):
+        if type(neighborhood) is Circle:
+            centro = neighborhood.center
             
             dr = np.array(centro) - np.array(punto)
             dr_u = dr / np.linalg.norm(dr)
             
             nr_u = np.array([-dr_u[1], dr_u[0]])
             
-            lambdas = np.linspace(-entorno.radii, entorno.radii, 20)
+            lambdas = np.linspace(-neighborhood.radii, neighborhood.radii, 20)
             
             # flag1 representa si corta alguna o no
             # flag2 representa si todos los puntos tienen algun corte
@@ -66,21 +66,21 @@ def HSPPS(barriers, N, prepro = True, log = False, timeLimit = 7200, init = Fals
                 
             return flag2
                            
-            # punto1 = np.array(centro) + entorno.radii*nr_u
+            # punto1 = np.array(centro) + neighborhood.radii*nr_u
             # segmento1 = [punto, punto1]
             # flag1 = any([not(nocortan(segmento1, barrera)) for barrera in barriers])
             #
-            # punto2 = np.array(centro) - entorno.radii*nr_u
+            # punto2 = np.array(centro) - neighborhood.radii*nr_u
             # segmento2 = [punto, punto2]
             # flag2 = any([not(nocortan(segmento2, barrera)) for barrera in barriers])
             
-        if type(entorno) is Poligonal:
+        if type(neighborhood) is Poligonal:
             
-            dr = np.array(entorno.V[1]) - np.array(entorno.V[0])
+            dr = np.array(neighborhood.V[1]) - np.array(neighborhood.V[0])
             
             dr_u = dr / np.linalg.norm(dr)
             
-            lambdas = np.linspace(0, entorno.longitud, 20)
+            lambdas = np.linspace(0, neighborhood.longitud, 20)
 
             flag2 = True
 
@@ -88,7 +88,7 @@ def HSPPS(barriers, N, prepro = True, log = False, timeLimit = 7200, init = Fals
                 
                 for barrera in barriers:
                     flag1 = False
-                    if not(nocortan([punto, np.array(entorno.V[0]) + landa*dr_u], [barrera[0], barrera[1]])):
+                    if not(nocortan([punto, np.array(neighborhood.V[0]) + landa*dr_u], [barrera[0], barrera[1]])):
                         flag1 = True
                         break
                 
@@ -100,8 +100,8 @@ def HSPPS(barriers, N, prepro = True, log = False, timeLimit = 7200, init = Fals
             return flag2        
             
         
-    def ve(entorno, punto):
-        return not(no_ve(entorno, punto))
+    def ve(neighborhood, punto):
+        return not(no_ve(neighborhood, punto))
         
     VN = [(-1, 0), (-2, 0)]
     EN = []
@@ -409,17 +409,17 @@ def HSPPS(barriers, N, prepro = True, log = False, timeLimit = 7200, init = Fals
     
     # NS and NT constraints
     for a, b, dim in P.keys():
-        entorno = N[abs(a)-1]
+        neighborhood = N[abs(a)-1]
         
-        if type(entorno) is Circulo:
+        if type(neighborhood) is Circle:
             MODEL.addConstr(dif_inside[a, b, dim] >= P[a, b, dim] - N[abs(a)-1].center[dim])
             MODEL.addConstr(dif_inside[a, b, dim] >= N[abs(a)-1].center[dim] - P[a, b, dim])
         
             MODEL.addConstr(gp.quicksum(dif_inside[a, b, dim]*dif_inside[a, b, dim] for dim in range(2)) <= d_inside[a, b]*d_inside[a, b])
             MODEL.addConstr(d_inside[a, b] <= N[abs(a)-1].radii)
         
-        if type(entorno) is Poligonal:
-            MODEL.addConstrs(P[a, b, dim] == landa[a, b]*entorno.V[0][dim] + (1-landa[a, b])*entorno.V[1][dim] for dim in range(2))
+        if type(neighborhood) is Poligonal:
+            MODEL.addConstrs(P[a, b, dim] == landa[a, b]*neighborhood.V[0][dim] + (1-landa[a, b])*neighborhood.V[1][dim] for dim in range(2))
         
     
     # MODEL.addConstr(y[-1, 2, 1] >= 0.5)
@@ -462,16 +462,16 @@ def HSPPS(barriers, N, prepro = True, log = False, timeLimit = 7200, init = Fals
     for a, b, c, d in p.keys():
             
         if a < 0:
-            entorno = N[abs(a) - 1]
+            neighborhood = N[abs(a) - 1]
             punto = barriers[c][d]
-            L_out = estima_L(entorno, punto)
-            U_out = estima_U(entorno, punto)
+            L_out = estima_L(neighborhood, punto)
+            U_out = estima_U(neighborhood, punto)
     
         if c < 0:
-            entorno = N[abs(c) - 1]
+            neighborhood = N[abs(c) - 1]
             punto = barriers[a][b]
-            L_out = estima_L(entorno, punto)
-            U_out = estima_U(entorno, punto)
+            L_out = estima_L(neighborhood, punto)
+            U_out = estima_U(neighborhood, punto)
 
         
         # print((L_out, U_out))
@@ -668,8 +668,8 @@ def HSPPS(barriers, N, prepro = True, log = False, timeLimit = 7200, init = Fals
 # barriers = [barrier1, barrier2, barrier3, barrier4, barrier5]
 # # barriers.append(barrier6)
 #
-# NS = Circulo(center = [20, 10], radii = 10)
-# NT = Circulo(center = [90, 90], radii = 5)
+# NS = Circle(center = [20, 10], radii = 10)
+# NT = Circle(center = [90, 90], radii = 5)
 #
 # N = [NS, NT]
 #

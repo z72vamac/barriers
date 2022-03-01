@@ -1,5 +1,5 @@
 # Con la formulacion nueva
-# Shortest path por entornos con barriers
+# Shortest path por neighborhoods con barriers
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
 from matplotlib.collections import PatchCollection
 from data import *
-from entorno import Circulo
+from neighborhood import Circle
 import copy
 import estimacion_M as eM
 from auxiliar_functions import *
@@ -26,8 +26,8 @@ barrier6 = [[30, 70], [70, 20]]
 barriers = [barrier1, barrier2, barrier3, barrier4, barrier5]
 barriers.append(barrier6)
 
-NS = Circulo(center = [20, 10], radii = 10)
-NT = Circulo(center = [90, 90], radii = 5)
+NS = Circle(center = [20, 10], radii = 10)
+NT = Circle(center = [90, 90], radii = 5)
 
 N = [NS, NT]
 

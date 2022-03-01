@@ -1,5 +1,5 @@
-"""Tenemos un conjunto E de entornos y un conjunto de poligonales P de las que queremos recorrer un porcentaje alfa p . Buscamos
-   un tour de mínima distancia que alterne poligonal-entorno y que visite todas las poligonales"""
+"""Tenemos un conjunto E de neighborhoods y un conjunto de poligonales P de las que queremos recorrer un porcentaje alfa p . Buscamos
+   un tour de mínima distancia que alterne poligonal-neighborhood y que visite todas las poligonales"""
 
 
 # Incluimos primero los paquetes
@@ -12,19 +12,19 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
 from matplotlib.collections import PatchCollection
 from data import *
-from entorno import *
+from neighborhood import *
 import copy
 import estimacion_M as eM
 from auxiliar_functions import path2matrix
 
 # Definicion de los datos
 """ P: conjunto de poligonales a agrupar
-    E: conjunto de entornos
+    E: conjunto de neighborhoods
     T: sucesion de etapas
-    C(e): centro del entorno e
-    R(e): radio del entorno e
+    C(e): centro del neighborhood e
+    R(e): radio del neighborhood e
     p: indice de las poligonales
-    e: indice de los entornos
+    e: indice de los neighborhoods
     t: indice de las etapas
     n: dimension del problema
 """

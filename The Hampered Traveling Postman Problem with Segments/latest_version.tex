@@ -1,0 +1,834 @@
+\documentclass[a4paper]{elsarticle}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+%\usepackage[spanish]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{mathtools,amssymb}
+\usepackage{subfigure}
+\usepackage{optidef}
+\usepackage{xcolor}
+\usepackage{amsthm}
+\usepackage{comment}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{mathrsfs}
+\usepackage{float}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+%\usepackage[noend]{algpseudocode}
+%\usepackage{ulem}
+\usepackage[margin=1in]{geometry}
+\usepackage{enumitem}
+\usepackage{xspace}
+\usepackage{array}
+\setlength{\extrarowheight}{.5ex}
+
+
+\usepackage{threeparttable}
+
+\usepackage[utf8]{inputenc}
+
+\title{The Traveling Postman Problem with Linear Barriers}
+\author{carlosvalverdemartin }
+\date{February 2021}
+
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+
+\newcommand{\SPPN}{{\sf{H-SPPN}\xspace }}
+\newcommand{\TSPN}{{\sf{H-TSPN}\xspace }}
+\newcommand{\TSPVN}{{\sf{H-TSPVN}\xspace }}
+\newcommand{\B}{{\mathcal B}}
+\newcommand{\VB}{{V^{}_{\mathcal B}}}
+\newcommand{\EB}{{E^{}_{\mathcal B}}}
+\newcommand{\VS}{{V^{}_{S}}}
+\newcommand{\ES}{{E^{}_{S}}}
+\newcommand{\VT}{{V^{}_{T}}}
+\newcommand{\ET}{{E^{}_{T}}}
+\newcommand{\VN}{{V^{}_{\mathcal N}}}
+\newcommand{\EN}{{E^{}_{\mathcal N}}}
+
+\newtheorem{remark}{Remark}
+\newtheorem{notation}{Notation}
+
+\newtheorem{prop}{Proposition}
+
+\definecolor{armygreen}{rgb}{0.19, 0.53, 0.43}
+\definecolor{atomictangerine}{rgb}{1.0, 0.6, 0.4}
+\newcommand{\JP}[1]{{\color{armygreen}#1}}
+\newcommand{\CV}[1]{{\color{atomictangerine}#1}}
+
+
+\begin{document}
+	\section{Description of the Problems}\label{section:description}
+	This section describes the two problems that are considered in this paper: the Hampered Shortest Path Problem with Neighborhoods \SPPN \ and the Hampered Traveling Salesman Problem with Neighborhoods \TSPN. In both models, we state the following assumptions:
+	
+	\begin{enumerate}[label=\textbf{A\arabic*},ref=\textbf{A\arabic*}]
+		\item \label{A1}The line segments of $\mathcal B$ are located in general position, i.e., the endpoints of these segments are not aligned. Although it is possible to model the most general case, \JP{one can always to slightly modify one of the endpoints so that the segments are in general position.}
+		\item The line segments of $\mathcal B$ are opened, that is, it is possible that the drone visits  endpoints of segments, but entering  in the interior points of them is not allowed. \JP{Observe that without loss of generality, we can always slightly enlarge these segments to make them opened.}
+		\item If there are two barriers that have a common portion of them, it is only considered the smallest line segment that contains both barriers.
+		\item \label{A4}There is no a rectilinear path to go from $N_S$ to $N_T$. Otherwise, the problem becomes straightforward and the solution is the minimum distance between both neighborhoods.
+	\end{enumerate}
+	
+	%In \SPPN, we have a source neighborhood $N_S\subset\mathbb R^2$ and a target neighborhood $N_T\subset\mathbb R^2$, that we assume to be convex sets and a set $\mathcal B$ of opened line segments located in general position that plays the role of barriers that the drone cannot cross, i.e., the drone can visit the endpoints of these barriers but it cannot be located in the interior points of the barriers. Note that, it is rational to assume that if there are two barriers that have a portion of them in common, it is only considered the smallest line segment that contains both barriers. The aim of the \SPPN is to find the best pair of points $(P_{S}, P_{T})\in N_S\times N_T$ in the source and target neighborhoods that minimize the length of the path that joins both points without crossing any barrier of $\mathcal B$. In this problem, it is implicitly assumed that there is not a rectilinear path to go from $N_S$ to $N_T$, otherwise, the problem becomes straightforward and the solution is the minimum distance between both neighborhoods. 
+	
+	\subsection{Description of the Hampered Shortest Path Problem with Neighborhoods}\label{subsection:descriptionHSPPN}
+	In \SPPN, we have a source neighborhood $N_S\subset\mathbb R^2$ and a target neighborhood $N_T\subset\mathbb R^2$, that we assume to be second order cone representable sets and a set $\mathcal B$ of line segments that play the role of barriers that the drone cannot cross. 
+	
+	The aim of the \SPPN \ is to find the best pair of points $(P_{S}, P_{T})\in N_S\times N_T$ in the source and target neighborhoods that minimize the length of the path that joins both points without crossing any barrier of $\mathcal B$ and assuming \ref{A1}-\ref{A4}. To state the model,  we define the following sets:
+	\begin{itemize}
+		\item $\VS=\{P_S\}$: set composed by the point selected in the source neighborhood $N_S$.
+		\item $\VB=\{P^1_B, P^2_B:B=\overline{P^1_B P^2_B}\in \mathcal B\}$: set of vertices that come from the endpoints of barriers in the problem.
+		\item $\VT=\{P^{}_T\}$: set composed by the point selected in the target neighborhood $N_T$.
+		\item $\ES=\{(P_S, P^i_{B}):P^i_B\in V_\B\text{ and } \overline{P_SP^i_B}\cap B''=\emptyset,\forall B''\in\B,\:i=1,2\}$: set of edges formed by the line segments that join the point selected in the source neighborhood and every endpoint in the barriers that do not cross any barrier in $\B$.
+		\item $\EB=\{(P^{i}_B, P^{j}_{B'}):P^i_B, P^j_{B'}\in \VB \text{ and } \overline{P^i_B P^j_{B'}}\cap B''=\emptyset,\:\forall B''\in\mathcal B,\:i, j=1,2\}$: set of edges formed by the line segments that join two vertices of $V_{\mathcal B}$ and do not cross any barrier in $\B$.
+		\item $\ET=\{(P^i_{B}, P^{}_T):P^i_B\in V_\B\text{ and } \overline{P^i_BP^{}_T}\cap B''=\emptyset,\forall B''\in\B,\:i=1,2\}$: set of edges formed by the line segments that join the point selected in the target neighborhood and every endpoint in the barriers that do not cross any barrier in $\B$.
+	\end{itemize} 
+	
+	At this point, we can define the graph $G= (V, E)$ induced by the barriers and neighborhoods, where $V=\VS\cup \VB\cup\VT$ and $E=\ES\cup\EB \cup\ET$. It is interesting to note that this graph can be split into two parts: a fixed graph $G_\B=(\VB,\EB)$ whose edges can be computed by using the Remark \ref{rem:determinants} and the sets $\VS$, $\ES$, $\VT$ and $\ET$ that depend on where the points $P_S$ and $P^{}_T$ are located as shown in Figure \ref{fig:graph}.  The figures show how the graph $G$ is generated. The blue dashed line segments represent the edges of $\ES$, the green ones, the edges of $\ET$ and the red dashed lines, the edges of $\EB$. A special case that can be remarked occurs when the neighborhoods are points. In that case, the induced graph is completely fixed and it is only necessary to find which edges are included by keeping in mind that there can not have crossings. This idea is exploited in Subsection \ref{section:reformulation}.
+	
+	%\textcolor{red}{Me estoy dando cuenta que nos pueden decir que para qué tenemos en cuenta todo el conjunto si realmente se pueden coger los puntos de la frontera mas cerca a cada uno de los puntos por donde puede salir de las barreras. Es cierto que solo ocurre con el SPP. En el caso del TSP esto no es cierto.}
+	
+	\input{figures/Example_ H-SPP-S_ Second Figure A}
+	
+	
+	\subsection{Description of the Hampered Traveling Salesman Problem with Neighborhoods}
+	The \TSPN \ is an extension of the \SPPN \ where neighborhood set $\mathcal N$ is considered to play the role of source and target  in the \SPPN \ and moreover, a set of given targets must be visited. The aim of the \TSPN \  is to seek the shortest tour that visits each neighborhood $N\in\mathcal N$ exactly once without crossing any barrier $B\in\mathcal B$ and assuming again \ref{A1}-\ref{A4}. 
+	
+	\JP{To present our formulation for the \TSPN, the graph induced by the endpoints of the barriers and the neighborhoods is different from the previous one for the \SPPN. For its description, we introduce the following sets:}
+	
+	\textcolor{red}{Discutir si abrir otra nueva sección con el modelo en el que las bolas se ven o añadir un comentario en esta subsección modificando solo la descripción de $\EN$}	
+	\begin{itemize}
+		\item $\VN=\{P_N:N\in\mathcal N\}$: set of the points selected in the neighborhoods $\mathcal N$ to be visited.
+		\item $\VB=\{P^1_B, P^2_B:B=\overline{P^1_B P^2_B}\in \mathcal B\}$: set of vertices that form the barriers of the problem.
+		\item $\EN=\{(P_N, P^i_{B}):P^i_B\in V_\B\text{ and } \overline{P_NP^i_B}\cap B''=\emptyset,\forall B''\in\B,\:i=1,2\}$: set of edges formed by the line segments that join the point selected in the neighborhoods of $\mathcal N$ and every endpoint in the barriers and do not cross any barrier in $\B$.
+		\item $\EB=\{(P^{i}_B, P^{j}_{B'}):P^i_B, P^j_{B'}\in \VB \text{ and } \overline{P^i_B P^j_{B'}}\cap B''=\emptyset,\:\forall B''\in\mathcal B,\:i, j=1,2\}$: set of edges formed by the line segments that join two vertices of $V_{\mathcal B}$ and do not cross any barrier in $\B$.
+	\end{itemize} 
+	
+	\JP{Following the same idea as before, we set $G=(V,E)$ induced by the barriers and the neighborhoods, where $V=\VN\cup\VB$ and $E=\EN\cup\EB$.}
+	
+	\CV{Note that, in this case, it may be interesting to consider this problem without taking into account the assumption \ref{A4}. This more general version is called the Hampered Traveling Salesman Problem with Visible Neighborhoods \TSPVN.} In this case, we do not require that the barriers separate neighborhoods completely, i.e., when going from one neighborhood to another is possible without crossing any barrier. The main difference lies in the description of edges for the graph induced by the neighborhoods and endpoints of barriers.
+	
+	By taking the same approach, the sets that describe the graph in that case are:
+	
+	\begin{itemize}
+		\item $\VN=\{P_N:N\in\mathcal N\}$: set of points in the neighborhoods $\mathcal N$ that must be visited.
+		\item $\VB=\{P^1_B, P^2_B:B=\overline{P^1_B P^2_B}\in \mathcal B\}$: set of vertices that form the barriers of the problem.
+		\item $V = \VN \cup \VB$.
+		\item $E=\{(P, P'):P, P' \in V \text{ and } \overline{PP'}\cap B''=\emptyset,\forall B''\in\B\}$: set of edges formed by the line segments that join every pair of points in $V$ that do not cross any barrier.
+	\end{itemize} 
+	
+	\JP{Figure \ref{fig:initialdata} shows an example of the problems that are being considered. In the left picture, the blue neighborhood represents the source, the green the target and the red line segments show the barriers that the drone cannot cross. In the center picture, an instance of the \TSPN \  is shown, where the neighborhood are balls and the barriers are, again, the red line segments. Finally, the picture in the right represents an instance of the \TSPVN \ where the orange and blue balls can be joined by a rectilinear path.}
+	
+	\input{figures/Example_ H-SPP-S_ First Figure}
+	
+	\section{MINLP Formulations}\label{section:formulations}
+	
+	This section  introduces a Mixed Integer Non-Linear Programming formulation for the problems described in Section \ref{section:description}. First of all, we present the conic programming representation of the neighborhoods and distance. Then,  we set the constraints that check if a segment is included in the set of edges $E$. Finally, the formulations for the \SPPN, \TSPN \ and \TSPVN \ are described.
+	
+		
+		First of all, we introduce the decision variables that represent the problem. These are summarized in Table \ref{table:variables}.
+		
+		\begin{table}[h!]
+			\centering
+			\caption{Summary of decision variables used in the mathematical programming model}
+			\label{table:variables}
+			\begin{tabular}{|cl|l}
+				\cline{1-2}
+				\multicolumn{2}{|l|}{\textbf{Binary Decision Variables}} &  \\ \cline{1-2}
+				\multicolumn{1}{|l|}{\textbf{Name}} & \textbf{Description} &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$\alpha(P|QQ')$} & \begin{tabular}[c]{@{}l@{}}1, if the determinant $\det(P|QQ')$ is positive,\\ 0, otherwise.\end{tabular} &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$\beta(PP'|QQ')$} & \begin{tabular}[c]{@{}l@{}}1, if the determinants $\det(P|QQ')$ and $\det(P'|QQ')$ have the same sign,\\ 0, otherwise.\end{tabular} &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$\gamma(PP'|QQ')$} & \begin{tabular}[c]{@{}l@{}}1, if  the determinants $\det(P|QQ')$ and $\det(P'|QQ')$ are both positive,\\ 0, otherwise.\end{tabular} &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$\delta(PP'|QQ')$} & \begin{tabular}[c]{@{}l@{}}1, if the line segments $\overline{PP'}$ and $\overline{QQ'}$ intersect,\\ 0, otherwise.\end{tabular} &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$\varepsilon(PP')$} & \begin{tabular}[c]{@{}l@{}}1, if the line segment $\overline{PP'}$ does not cross any barrier,\\ 0, otherwise.\end{tabular} &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$y(PQ)$} & \begin{tabular}[c]{@{}l@{}}1, if the edge $(P, Q)$ is selected in the solution of the model,\\ 0, otherwise.\end{tabular} &  \\ \cline{1-2}
+				\multicolumn{2}{|l|}{\textbf{Continuous Decision Variables}} & \multicolumn{1}{c}{\textbf{}} \\ \cline{1-2}
+				\multicolumn{1}{|l|}{\textbf{Name}} & \textbf{Description} &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$P_N$} & Coordinates representing the point selected in the neighborhood $N$. &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$d(PQ)$} & Euclidean distance between the points $P$ and $Q$. &  \\ \cline{1-2}
+				\multicolumn{1}{|c|}{$g(PQ)$} & Amount of commodity passing through the edge $(P, Q)$. &  \\ \cline{1-2}
+			\end{tabular}
+		\end{table}
+	
+		\subsection{Conic programming constraints in the models}
+	In both considered  problems, namely \SPPN \ and \TSPN, there exist two second-order cone constraints that model the distance between  pair of points $P$ and $Q$, as well the representation of neighborhoods where points can be selected.
+	
+	\newcommand{\dvar}[2]{d(#1#2)}
+	
+	For the former case, we introduce the non-negative continuous variable $\dvar{PQ}$ that represents the distance between $P$ and $Q$:
+	
+	
+	\begin{equation*}\tag{d-C}\label{eq:dC}
+		\|P - Q\|\leq \dvar{P}{Q},\quad\forall (P,Q)\in E.
+	\end{equation*}
+	
+	For the latter case, since we are assuming that the neighborhoods are second-order cone (SOC) representable, they can be expressed by means of the constraints:
+	
+	\begin{equation*}\tag{N-C}\label{eq:nC}
+		P_N\in N \Longleftrightarrow
+		\|A_N^i P_N + b_N^i\| \leq (c_N^i)^T P_N + d_N^i,\quad i=1,\ldots,nc_N, \\
+	\end{equation*}
+	%\begin{equation}\label{C-C}\tag{$\mathcal{C}$-C}
+	%    \|B_ix + b_i\|\leq c_i^Tx + d_i,\quad i=1,\ldots,N,
+	%\end{equation}
+	where $A_N^i, b_N^i, c_N^i$ and $d_N^i$ are parameters of the constraint $i$ and $nc_N$ denotes the number of constraints that appear in the block associated to the neighborhood $N$.
+	
+	It is remarkable that these inequalities can model the special case of linear constraints (for $A_N^{i}, b_N^i\equiv 0$), ellipsoids and hyperbolic constraints (see \cite{Lobo1998} for more information).
+	
+	\textcolor{red}{Puede ser muy interesante el caso 3D pero quizás en otro trabajo, no?}
+	
+	\subsection{Checking whether a segment is an edge of the induced graph}
+	
+	Let $P, Q\in V$ two vertices of the graph defined in the previous section such that $(P, Q)\not\in E_\mathcal B$. The goal is to check if the edge $(P, Q)$ is in $E$, i.e., if the line segment $\overline{PQ}$ does not intersect with any barrier of $\mathcal B$. The following well-known computational geometry result can be used to check if two line segments intersect:
+	
+	\newcommand{\segment}[2]{\overline{#1#2}}
+	\newcommand{\determinant}[3]{\det({#1|#2#3})}
+	
+	
+	\begin{remark}\label{rem:determinants}
+		Let $\overline{PQ}$ and $B=\overline{P_B^1P_B^2}\in\mathcal B$ be two different line segments. Let also denote 
+		$$
+		\determinant{P}{P_B^1}{P_B^2}=\det\left(\begin{array}{c|c} \overrightarrow{PP_B^1} & \overrightarrow{PP_B^2}\end{array}\right):=\det\left( \begin{array}{cc}  P_{B_x}^1-P_x & P_{B_x}^2-P_x \\ P_{B_y}^1-P_y & P_{B_y}^2-P_y \end{array}\right)$$ 
+		the determinant whose arguments are $P=(P_x,P_y)$, $P_B^1=(P_{B_x}^1,P_{B_y}^1)$ and $P_B^2=(P_{B_x}^2,P_{B_y}^2)$. If
+		\begin{equation*}
+			\normalfont{\text{sign}}\left(\determinant{P}{P_B^1}{P_B^2}\right) = \normalfont{\text{sign}}\left(\determinant{Q}{P_B^1}{P_B^2}\right)
+			\quad
+			\text{or}
+			\quad
+			\normalfont{\text{sign}}\left(\determinant{P_B^1}{P}{Q}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^2}{P}{Q}\right)
+			,
+		\end{equation*}
+		then $\overline{PQ}$ and $B$ do not intersect.
+	\end{remark}
+	
+	Since $E$ is not fixed, the determinants in Remark \ref{rem:determinants} also depend on the location of $P$ and $Q$.  Hence, it is essential to model the previous constraint by using binary variables that check the sign of determinants, the equality of signs, and the disjunctive condition.
+	
+	\newcommand{\LS}[3]{L(#1|#2#3)}
+	\newcommand{\US}[3]{U(#1|#2#3)}
+	\newcommand{\alphamas}[3]{\alpha(#1|#2#3)}
+	\newcommand{\alphamenos}[3]{\alpha^{-}(#1|#2#3)}
+	%\newcommand{\alphacero}[3]{\alpha^{0\,}(#1|#2#3)}
+	\newcommand{\alphapunto}[3]{\alpha^{\cdotp}(#1|#2#3)}
+	
+	To model the sign of each determinant in Remark \ref{rem:determinants}. We introduce the binary variable $\alpha$, that assumes the value one if the determinant is positive and zero, otherwise. Note that the case when determinants are null does not need to be considered, because the segments are located in general position.
+	
+	It is possible to represent the sign condition by including the following constraints:
+	\begin{align*}\tag{$\alpha$-C}\label{eq:alphaC}
+		\left[1-\alphamas{P}{P_B^1}{P_B^2}\right]\LS{P}{P_B^1}{P_B^2}&\leq\determinant{P}{P_B^1}{P_B^2}\leq \US{P}{P_B^1}{P_B^2}\:\alphamas{P}{P_B^1}{P_B^2},\\
+		\left[1-\alphamas{Q}{P_B^1}{P_B^2}\right]\LS{Q}{P_B^1}{P_B^2}&\leq\determinant{Q}{P_B^1}{P_B^2}\leq \US{Q}{P_B^1}{P_B^2}\:\alphamas{Q}{P_B^1}{P_B^2},\\
+		\left[1-\alphamas{P_B^1}{P}{Q}\right]\LS{P_B^1}{P}{Q}&\leq\determinant{P_B^1}{P}{Q}\leq \US{P_B^1}{P}{Q}\:\alphamas{P_B^1}{P}{Q},\\		\left[1-\alphamas{P_B^2}{P}{Q}\right]\LS{P_B^2}{P}{Q}&\leq\determinant{P_B^2}{P}{Q}\leq \US{P_B^2}{P}{Q}\:\alphamas{P_B^2}{P}{Q},
+	\end{align*}
+	
+	\noindent where $L$ and $U$ are a lower and an upper bound for the value of determinants, respectively. If a determinant is positive, then $\alpha$ must be one to make the second inequality feasible. The analogous case happens if the determinant is not positive.
+	
+	\newcommand{\betamas}[4]{\beta(#1#2|#3#4)}
+	%\newcommand{\betamenos}[4]{\beta^{-}(#1#2|#3#4)}
+	%\newcommand{\betacero}[4]{\beta^{0\,}(#1#2|#3#4)}
+	%\newcommand{\betapunto}[4]{\beta^{\cdotp}(#1#2|#3#4)}
+	
+	Now, to check if the pairs of determinants 
+	$$\determinant{P}{P_B^1}{P_B^2},\: \determinant{Q}{P_B^1}{P_B^2}\quad \text{and} \quad \determinant{P_B^1}{P}{Q},\:	 \determinant{P_B^2}{P}{Q}$$ 
+	have the same sign, we introduce the binary variable $\beta$, that is one if the pair has the same sign, and zero otherwise.
+	
+	\newcommand{\gammaprod}[4]{\gamma(#1#2|#3#4)}
+	
+	Hence, the $\beta$ variable can be represented by the equivalence constraint of the $\alpha$ variables
+	\begin{align*}%\tag{$\beta$-C}\label{eq:betaC}
+		\betamas{P}{Q}{P_B^1}{P_B^2}&=\alphamas{P}{P_B^1}{P_B^2}\alphamas{Q}{P_B^1}{P_B^2} + \left[1-\alphamas{P}{P_B^1}{P_B^2}\right]\left[1-\alphamas{Q}{P_B^1}{P_B^2}\right],\\
+		\betamas{P_B^1}{P_B^2}{P}{Q}&=\alphamas{P_B^1}{P}{Q}\alphamas{P_B^2}{P}{Q} + \left[1-\alphamas{P_B^1}{P}{Q}\right]\left[1-\alphamas{P_B^2}{P}{Q}\right].
+	\end{align*}
+	This condition can be equivalently written using the auxiliary binary variable $\gamma$ is  that models the product of the $\alpha$ variables:
+	\begin{align*}\tag{$\beta$-C}\label{eq:betaC}
+		\betamas{P}{Q}{P_B^1}{P_B^2}&=2\gammaprod{P}{Q}{P_B^1}{P_B^2} -\alphamas{P}{P_B^1}{P_B^2}-\alphamas{Q}{P_B^1}{P_B^2}+1,\\
+		\betamas{P_B^1}{P_B^2}{P}{Q}&=2\gammaprod{P_B^1}{P_B^2}{P}{Q} -\alphamas{P_B^1}{P}{Q}-\alphamas{P_B^2}{P}{Q}+1,
+	\end{align*}
+	We observe that $\gamma$ can be linearized by using the following constraints:
+	
+	\begin{minipage}{.5\linewidth}
+	\begin{align*}
+		\gammaprod{P}{Q}{P_B^1}{P_B^2} & \leq \alphamas{P}{P_B^1}{P_B^2},\\
+		\gammaprod{P}{Q}{P_B^1}{P_B^2} & \leq \alphamas{Q}{P_B^1}{P_B^2},\\
+		\gammaprod{P}{Q}{P_B^1}{P_B^2} & \geq \alphamas{P}{P_B^1}{P_B^2} + \alphamas{Q}{P_B^1}{P_B^2} - 1,
+	\end{align*}
+	\end{minipage}
+	\begin{minipage}{.5\linewidth}
+	\begin{align*}\tag{$\gamma$-C}\label{eq:gammaC}
+		\gammaprod{P_B^1}{P_B^2}{P}{Q} & \leq \alphamas{P_B^1}{P}{Q},\\
+		\gammaprod{P_B^1}{P_B^2}{P}{Q} & \leq \alphamas{P_B^2}{P}{Q},\\
+		\gammaprod{P_B^1}{P_B^2}{P}{Q} & \geq \alphamas{P_B^1}{P}{Q} + \alphamas{P_B^2}{P}{Q} - 1.
+	\end{align*}
+	\end{minipage}
+
+	\bigskip
+	
+	\newcommand{\deltacheck}[4]{\delta(#1#2|#3#4)}
+	
+	Later, we need to check whether there exists any coincidence in the sign of determinants, so we define the binary variable $\delta$ that is one if segments do not intersect and zero, otherwise. This condition can be modeled by using these disjunctive constraints:
+	\begin{equation*}\tag{$\delta$-C}\label{eq:deltaC}
+		\frac{1}{2}\left[\betamas{P}{Q}{P_B^1}{P_B^2}+\betamas{P_B^1}{P_B^2}{P}{Q}\right]\leq\deltacheck{P}{Q}{P_B^1}{P_B^2}\leq 2\left[\betamas{P}{Q}{P_B^1}{P_B^2}+\betamas{P_B^1}{P_B^2}{P}{Q}\right].
+	\end{equation*}
+	Indeed, the above constraint states that if there exists a sign coincidence, then $\delta$ is one to satisfy the first constraint, and the second is always fulfilled. However, if the sign of the determinants is not the same, then the second constraint is active and $\delta$ is null.
+	
+	Finally, it is required that
+	$$\overline{PQ}\cap B''=\emptyset,\quad \forall B''\in\B,\quad\Longleftrightarrow\quad \deltacheck{P}{Q}{P_{B''}^1}{P_{B''}^2}=1,\quad\forall B''\in\B.$$
+	%Firstly, we will expose the constraints for two line segments $\segment{A}{B}$ and $\segment{C}{D}$ in general to model the previous remark. Afterwards, we will focus on the case for edges of $\ES$. 
+	
+	%Let $B\in\B$ a barrier and $P_B^i$ and endpoint of $B$. Hence, the edge $(P_S, P_B^i)$ belongs to $\ES$ if $\overline{P^{}_SP^i_B}\cap B'=\emptyset$, for all $B'\in\B$
+	%or equivalently, by the Remark \ref{rem:determinants}:
+	%\begin{equation*}
+	%\normalfont{\text{sign}}\left(\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right)
+	%\quad
+	%\text{or}
+	%\quad
+	%\normalfont{\text{sign}}\left(\determinant{P^{}_S}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right),
+	%\quad\forall B'\in\B.
+	%\end{equation*}
+	%$$=\emptyset,\quad\forall B''\in\B,$$
+	
+	%However, if those segments intersect, we need to ensure that $\deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ is zero. It can be done by inserting the term $\epsilon \deltacheck{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$ in the objective function, where $\epsilon>0$ is a small value.
+	\newcommand{\varepsilonvar}[2]{\varepsilon(#1#2)}
+	% At this point, we will focus on the description of the edges of $\ES$.
+
+	Hence, if we denote by $\varepsilonvar{P}{Q}$ the binary variable that is one when the previous constraint is satisfied and zero otherwise, this variable can be represented by means of the following inequalities:
+	\begin{equation*}\tag{$\varepsilon$-C}\label{eq:varepsilonC}
+		\left[\sum_{B''\in\mathcal B}\deltacheck{P}{Q}{P^1_{B''}}{P^2_{B''}}-|\mathcal B|\right] + 1\leq \varepsilonvar{P}{Q}\leq \frac{1}{|\B|}\sum_{B''\in\mathcal B}\deltacheck{P}{Q}{P^1_{B''}}{P^2_{B''}}.
+	\end{equation*}
+	If there is a barrier $B''\in\B$ that intersects the segment $\overline{PQ}$, then $\deltacheck{P}{Q}{P^1_{B''}}{P^2_{B''}}$ is zero and the second inequality enforces $\varepsilon$ to be zero because the right hand side is fractional and the first inequality is non-positive. Nonetheless, if there is no barrier that intersects the segment, then $\varepsilon$ is equals to one, because the left hand side of the first inequality is one and the right hand side of the second inequality too. 
+	
+	Note that, it is possible to represent the set of edges by means of $\varepsilon$ variables as follows:
+	$$ E = \{P, Q\in V:\varepsilonvar{P}{Q}=1\}.$$
+	
+	This representation of $E$ will be utilized for the formulations that are detailed in the following subsections. 
+	
+%	\subsection{A formulation for the \SPPN}
+%	The main goal of the \SPPN\  is to solve a shortest path problem in the undirected graph induced by the endpoints of the barriers and the neighborhoods. 
+	%\input{figures/Example_ H-SPP-S_ Second Figure B}
+	
+	
+	%\newcommand{\sign}{{\text{sign}}}
+	
+	
+	%\newcommand{\determinant}[3]{\det({#1#2#3})}
+	
+	
+	\subsection{A formulation for the \SPPN}
+	\CV{The idea of the formulation of the \SPPN \ is to extend the classical formulation of the Shortest Path Problem by taking into account the description of the graph $G$ in Subsection \ref{subsection:descriptionHSPPN}. }
+	
+	\newcommand{\yvar}[2]{y(#1#2)}
+	
+	The path that the drone can follow by taking into account the edges of the induced graph is described. Let $P, Q\in V$ and let $\yvar{PQ}$ be the binary variable that is one if the drone goes from $P$ to $Q$. Then, the inequalities 
+	
+	\begin{equation*}\tag{y-C}\label{eq:yC}
+		\yvar{P}{Q}\leq \varepsilonvar{P}{Q},
+	\end{equation*}
+	assure that the drone can go from $P$ to $Q$ only if the segment $\segment{P}{Q}$ does not cross any barrier. 
+	
+	
+	By taking into account the constraints explained in subsections above, the following MINLP formulation for the \SPPN \ is presented:
+	
+	\begin{mini*}
+		{}{\sum_{(P,Q)\in E}\dvar{P}{Q}\yvar{P}{Q}}
+		{}{}\label{eq:Example1}\tag{H-SPPN}
+		\addConstraint{\sum_{\{Q:(P, Q)\in E\}}\yvar{P}{Q}-\sum_{\{Q:(Q, P)\in E\}}\yvar{Q}{P}}{=\left\{
+			\begin{array}{rl} 
+				1, & \text{if } P\in\VS, \\
+				0, & \text{if } P\in\VB, \\
+				-1, & \text{if }P\in\VT.
+			\end{array}
+			\right.}
+		\addConstraint{\eqref{eq:alphaC},\eqref{eq:betaC},\eqref{eq:deltaC},\eqref{eq:gammaC},\eqref{eq:varepsilonC},\eqref{eq:yC}}{ }
+		\addConstraint{\eqref{eq:dC}, \eqref{eq:nC}.}{ }
+	\end{mini*}
+	
+	The objective function minimizes the length of the path followed by the drone on the edges of the induced graph $G$. The first constraints are the flow conservation constraints, the second constraints represent the sets $\ES$ and $\ET$ and the third ones state that the points selected must be in their respective neighborhoods.
+	
+	\input{figures/Example_ H-SPP-S_ Solution}
+	
+	\subsubsection{Reformulating the \SPPN}\label{section:reformulation}
+	The formulation for the \SPPN \ presented above can be simplified by taking into account the following observation.
+	\begin{prop}
+		There exists two finite dominant sets, $N_S^*$ and $N_T^*$, of possible candidates to be in  $N_S$ and $N_T$, respectively. Moreover,
+		\begin{align*}
+			N_S^*&=\{P_S(P_B^i)=\argmin_{P_S\in N_S} \|P_S - P_B^i\|:(P_S, P_B^i)\in E_S\},\\
+			N_T^*&=\{P_T(P_B^i)=\argmin_{P_T\in N_T} \|P_B^i - P_T\|:(P_B^i, P_T)\in E_T\}.
+		\end{align*}
+	\end{prop}
+	\begin{proof}
+		Note that the points selected in $N_S$ and $N_T$ in an optimal solution for \SPPN \ must be those that give the minimum distances to the points of the first and last visited barriers in the optimal solution, respectively. Therefore, $N_S^*$ and $N_T^*$ must be composed, at most, by points in sets
+		\begin{align*}
+			\{P_S(P_B^i)&=\argmin_{P_S\in N_S} \|P_S - P_B^i\|:(P_S, P_B^i)\in E_S\},\\
+			\{P_T(P_B^i)&=\argmin_{P_T\in N_T} \|P_B^i - P_T\|:(P_B^i, P_T)\in E_T\},
+		\end{align*} 
+		as claimed.
+	\end{proof}
+	\noindent
+	Therefore, we can compute sets $N_S^*$ and $N_T^*$ by solving a convex problem for each endpoint of the barriers:
+	\begin{align*}
+		N_S^*&=\{P_S(P_B^i)=\argmin_{P_S\in N_S} \|P_S - P_B^i\|:\varepsilonvar{P_S}{P_B^i}=1\},\\
+		N_T^*&=\{P_T(P_B^i)=\argmin_{P_T\in N_T} \|P_B^i - P_T\|:\varepsilonvar{P_B^i}{P_T}=1\}.
+	\end{align*}
+
+	\input{figures/Example_ H-SPP-S_ Dominant}
+	Moreover, the points chosen in the solution, $P_S$ and $P_T$, can be represented by the points in $N^*$ as shown below:
+	
+	\begin{minipage}{.5\linewidth}
+	\begin{align*}\tag{N$_S^*$-C}\label{eq:nCs}
+		P_S&=\sum_{P_B^i\in V_{\mathcal B}}\mu_S(P_B^i)P_S(P_B^i),\\
+		1&=\sum_{P_B^i\in V_{\mathcal B}}\mu_S(P_B^i),
+	\end{align*}
+	\end{minipage}
+	\begin{minipage}{.5\linewidth}
+	\begin{align*}\tag{N$_T^*$-C}\label{eq:nCt}
+		P_T&=\sum_{P_B^i\in V_{\mathcal B}}\mu_T(P_B^i)P_T(P_B^i),\\
+		1&=\sum_{P_B^i\in V_{\mathcal B}}\mu_T(P_B^i),
+	\end{align*}
+	\end{minipage}
+
+	\bigskip
+	
+	where $\mu_S$ and $\mu_T$ are indicator variables that select one of the points in $N^*_S$ and $N^*_T$ in the solution.
+	
+	The major advantage of this approach is that, once sets $N_S^*$ and $N_T^*$ are computed beforehand, the whole graph $G$ is fixed because the incident edges can be computed for each point $P_S(P_B^i)$ and $P_T(P_B^i)$, $P_B^i\in V_{\mathcal B}$, separately. Defining again the variable $y$ for the edges in $E$, the new formulation for the \SPPN \ can be expressed as the following simplified program:
+	\begin{mini*}
+		{}{\sum_{(P,Q)\in E}\dvar{P}{Q}\yvar{P}{Q}}
+		{}{}\label{eq:Example1b}\tag{H-SPPN$^*$}
+		\addConstraint{\sum_{\{Q:(P, Q)\in E\}}\yvar{P}{Q}-\sum_{\{Q:(Q, P)\in E\}}\yvar{Q}{P}}{=\left\{
+			\begin{array}{rl} 
+				1, & \text{if } P\in\VS, \\
+				0, & \text{if } P\in\VB, \\
+				-1, & \text{if }P\in\VT.
+			\end{array}
+			\right.}
+		\addConstraint{\eqref{eq:dC}, \eqref{eq:nCs}, \eqref{eq:nCt}.}{ }
+	\end{mini*}
+	
+		\begin{prop}
+			The \SPPN \ can be solved in polynomial time.
+		\end{prop}
+		
+		
+		The proof follows using the finite dominant sets $N^*_{S}$ and $N^*_{T}$ and taking the minimum of the lengths of the solutions for the shortest path problem that can be obtained for each pair of points.
+	
+	\subsection{A formulation for the \TSPN}
+
+		
+		The rationale of the formulation for the \TSPN \ is to consider the variant called Steiner TSP (STSP) (reference to this problem), where some nodes in $\VB$ do not have to be visited, but if necessary they can be visited more than once. 
+		
+		It is well known that it is possible to convert any instance of the STSP into an instance of the standard TSP, by computing the shortest paths between every pair of required nodes, when these nodes are fixed. However, in our problem, since the points in the neighborhoods are not fixed, this simplification cannot be applied to obtain the optimal solution for the \TSPN, although it may produce an approximation to generate lower bounds for the \TSPN.
+	
+	
+	\newcommand{\gvar}[2]{g(#1#2)}
+	
+	\JP{Our formulation rest on adjusting single-commodity flow formulation to ensure connectivity. We can assume wlog that the neighborhood $N_1$ is required and the drone departs from that depot (assuming to be $N_1$) with $|\mathcal N|-1$ units of commodity. The idea is that the model must deliver one unit of commodity to each of the required neighborhoods. Then, for each edge $(P, Q)\in E$, we define the following variables:}
+
+
+	\begin{itemize}
+		\item $\yvar{P}{Q}$, binary variable that is equals to one if the drone goes from $P$ to $Q$.
+		\item $\gvar{P}{Q}$, non-negative continuous variable that represents the amount of the commodity passing through the edge $(P, Q)$.
+	\end{itemize}
+	
+	Hence, we can adjust the single-commodity flow formulation to the induced graph $G$ as follows:
+	
+	\begin{mini*}
+		{}{\sum_{(P,Q)\in E}\dvar{P}{Q}\yvar{P}{Q}}
+		{}{}\label{eq:Example2}\tag{H-TSPN}
+		\addConstraint{\sum_{\{Q:(P_N, Q)\in \EN\}}\yvar{P_N}{Q}}{\geq 1,}{\quad\forall P_N\in \VN}
+		\addConstraint{\sum_{\{Q:(P, Q)\in E\}}\yvar{P}{Q}}{= \sum_{\{Q:(Q, P)\in E\}}\yvar{Q}{P},}{\quad\forall P\in V}
+		\addConstraint{\sum_{\{Q:(Q, P_N)\in \EN\}}\gvar{Q}{P_N}-\sum_{\{Q:(P_N, Q)\in \EN\}}\gvar{P_N}{Q}}{= 1,}{\quad\forall P_N\in \VN\setminus\{P_{N_1}\}}
+		\addConstraint{\sum_{\{Q:(Q, P_B^i)\in E\}}\gvar{Q}{P_B^i}-\sum_{\{Q:(P_B^i, Q)\in E\}}\gvar{P_B^i}{Q}}{= 0,}{\quad\forall P_B^i\in \VB}
+		\addConstraint{\gvar{P}{Q}}{\leq (|\mathcal N|-1)\yvar{P}{Q},}{\quad\forall (P,Q)\in E}
+		\addConstraint{\eqref{eq:alphaC},\eqref{eq:betaC},\eqref{eq:deltaC},\eqref{eq:gammaC},\eqref{eq:varepsilonC},\eqref{eq:yC}}{ }
+		\addConstraint{\eqref{eq:dC}, \eqref{eq:nC}.}{ }
+	\end{mini*}
+	
+	\JP{The first constraints impose that the drone departs from each neighborhood. The second constraints are the flow conservation constraints. The third inequalities ensure that one unit of commodity is delivered to each required neighborhood. The fourth ones ensure that the amount of commodity passing through the points in the barriers is not consumed. Finally, the last inequalities enforce that if some commodity passes along an edge only if this edge is used in the tour.}
+	
+	\input{figures/Example_ H-TSP-S_ Solution}
+	
+		\begin{prop}
+			The \TSPN \ is NP-complete.
+		\end{prop}
+		
+		Note that, once a point is fixed in each neighborhood, the problem obtained in the induced graph $G$ is the Steiner TSP (STSP), that is NP-complete.
+		
+	
+	\subsubsection{Reformulating the \TSPN}
+	The idea of computing a dominant set that represent each of the neighborhoods in the \SPPN \ can be adopted to reformulate the \TSPN \ in the same way. The dominant sets are stated in the next proposition:
+	
+	\begin{prop}
+		Given a neighborhood $N\in\mathcal N$, there exists a finite dominant set, $N^*$ of possible candidates to be in $N$. Moreover,
+		\begin{align*}
+			N^*&=\{P_N(P_{B}^i, P_{B'}^j)=\argmin_{P_N\in N} \|P_B^i - P_N\| + \|P_N - P_{B'}^j\| :(P_B^i, P_N), (P_N, P_{B'}^j)\in \EN\}.
+		\end{align*}
+	\end{prop}
+	\begin{proof}
+		The way a drone visits a neighborhood $N$ is
+		$$P_{B}^i\longrightarrow P_N\longrightarrow P_{B'}^j,$$
+		for some points $P_B^i,\, P_{B'}^j\in \VB$, since there do not exist a rectilinear path that join any pair of neighborhoods. Hence, the points chosen in an optimal solution for \TSPN \ must be those that produce the minimum distances to the points of the previously and next visited barriers in the optimal solution. Therefore, $N^*$ must be composed, at most, by points in set
+		$$
+			\{P_N(P_{B}^i, P_{B'}^j)=\argmin_{P_N\in N} \|P_B^i - P_N\| + \|P_N - P_{B'}^j\| :(P_B^i, P_N), (P_N, P_{B'}^j)\in \EN\}.
+		$$
+		what was to be shown.
+	\end{proof}
+		Again, we can compute the respective dominant set $N^*$ of a neighborhood $N\in\mathcal N$ by solving a convex problem for each pair of barrier endpoints more complex:
+	\begin{align*}
+		N^*&=\{P_N(P_{B}^i, P_{B'}^j)=\argmin_{P_N\in N} \|P_B^i - P_N\| + \|P_N - P_{B'}^j\| :\varepsilonvar{P_B^i}{P_N} = 1 \wedge \varepsilonvar{P_N}{P_{B'}^j} = 1\}.
+	\end{align*}
+	
+	Moreover, the points $P_N$ chosen in the solution can be represented by the points in $N^*$ as shown below:
+	
+	\begin{align*}\tag{N$^*$-C}\label{eq:nCn}
+		P_N&=\sum_{P_B^i\in V_{\mathcal B}}\sum_{P_{B'}^j\in V_{\mathcal B}}\mu_N(P_B^iP_{B'}^j)P_N(P_B^iP_{B'}^j),\\
+		1&=\sum_{P_B^i\in V_{\mathcal B}}\sum_{P_{B'}^j\in V_{\mathcal B}}\mu_N(P_B^iP_{B'}^j),\\
+		2\mu_N(P_B^iP_{B'}^j)&= \yvar{P_B^i}{P_N} + \yvar{P_N}{P_{B'}^j},
+	\end{align*}
+	
+	where $\mu_N$ are indicator variables that select one of the points in $N^*$ in the solution. Last equality ensures that the path $P_B^i\longrightarrow P_N \longrightarrow P_{B'}^j$ is followed by the drone if and only if $P_N(P_B^i P_{B'}^j)$ is selected.
+	
+	Again sets $N^*$ can be computed in advance so that the whole graph $G$ will be fixed. The new formulation for the \TSPN \ can be represented as the next simplified program:
+	\begin{mini*}
+	{}{\sum_{(P,Q)\in E}\dvar{P}{Q}\yvar{P}{Q}}
+	{}{}\label{eq:Example2b}\tag{H-TSPN$^*$}
+	\addConstraint{\sum_{\{Q:(P_N, Q)\in \EN\}}\yvar{P_N}{Q}}{\geq 1,}{\quad\forall P_N\in \VN}
+	\addConstraint{\sum_{\{Q:(P, Q)\in E\}}\yvar{P}{Q}}{= \sum_{\{Q:(Q, P)\in E\}}\yvar{Q}{P},}{\quad\forall P\in V}
+	\addConstraint{\sum_{\{Q:(Q, P_N)\in \EN\}}\gvar{Q}{P_N}-\sum_{\{Q:(P_N, Q)\in \EN\}}\gvar{P_N}{Q}}{= 1,}{\quad\forall P_N\in \VN\setminus\{P_{N_1}\}}
+	\addConstraint{\sum_{\{Q:(Q, P_B^i)\in E\}}\gvar{Q}{P_B^i}-\sum_{\{Q:(P_B^i, Q)\in E\}}\gvar{P_B^i}{Q}}{= 0,}{\quad\forall P_B^i\in \VB}
+	\addConstraint{\gvar{P}{Q}}{\leq (|\mathcal N|-1)\yvar{P}{Q},}{\quad\forall (P,Q)\in E}
+	\addConstraint{\eqref{eq:dC}, \eqref{eq:nCn}.}{ }
+	\end{mini*}
+	
+	The reader may note that, although this formulation is equivalent to \eqref{eq:Example2}, the cost of computing sets.
+	
+	
+	\CV{
+		\subsection{Relaxing the assumptions of the problem: The \TSPVN}
+		
+		In this subsection, we expose the differences that appear when, in the model of the \TSPN, we do not require that the barriers separate the neighborhoods completely, i.e., when going from one neighborhood to another one is possible without crossing any barrier. The main difference lies in the description of the edges of the graph induced by the neighborhoods and the endpoints of the barriers.
+		
+		By taking the same approach, the sets that describe the graph in that case are:
+		
+		\begin{itemize}
+			\item $\VN=\{P_N:N\in\mathcal N\}$: set of points in the neighborhoods $\mathcal N$ that must be visited.
+			\item $\VB=\{P^1_B, P^2_B:B=\overline{P^1_B P^2_B}\in \mathcal B\}$: set of vertices that form the barriers of the problem.
+			\item $V = \VN \cup \VB$.
+			\item $E=\{(P, P'):P, P' \in V \text{ and } \overline{PP'}\cap B''=\emptyset,\forall B''\in\B\}$: set of edges formed by the line segments that join every pair of points in $V$ that do not cross any barrier.
+		\end{itemize} 
+		
+		The difference between the set of edges in the \TSPVN with respect to the graph in \TSPN is that, in the former case, the edges that join each pair of neighborhoods are considered. This fact leads to include product of continuous variables in the $\alpha$ constraints of the model that represent the determinants that determine if the two variable points in the neighborhoods cross any barrier or not and the problem becomes non-convex.
+		
+	}
+	%\textcolor{red}{¿Solucion del problema del TSP propuesto en el dibujo? }
+	
+	%Note that this problem is not convex because the determinants that model the orientation of the points to check if there exist crossings produce product of variables. 
+	
+	%\begin{equation*}
+	%\normalfont{\text{sign}}\left(\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right)
+	%\quad
+	%\text{or}
+	%\quad
+	%\normalfont{\text{sign}}\left(\determinant{P^{}_S}{P_{B'}^1}{P_{B'}^2}\right) = \normalfont{\text{sign}}\left(\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}\right),
+	%\quad\forall B'\in\B.
+	%\end{equation*}
+	%%$$=\emptyset,\quad\forall B''\in\B,$$
+	%\newcommand{\LS}[3]{L(#1|#2#3)}
+	%\newcommand{\US}[3]{U(#1|#2#3)}
+	%\newcommand{\alpha}[3]{\alpha^{+}(#1|#2#3)}
+	%\newcommand{\alphamenos}[3]{\alpha^{-}(#1|#2#3)}
+	%\newcommand{\alphacero}[3]{\alpha^{0\,}(#1|#2#3)}
+	%\textcolor{red}{Consideramos el caso en el que los puntos estan alineados?}
+	%
+	%To model the sign of the determinant $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, we define the following binary variables:
+	%\begin{itemize}
+	%\item $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is strictly positive and zero, otherwise.
+	%\item $\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is strictly negative and zero, otherwise.
+	%\item $\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is zero and zero, otherwise.
+	%\end{itemize}
+	%
+	%
+	%It is possible to represent the sign condition by including the following constraints:
+	%%\begin{equation}\tag{sign+}\label{eq:sign}
+	%%\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\left(1-\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right)\leq \determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2}\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2},
+	%%\end{equation}
+	%\begin{align*}\tag{sign}\label{eq:sign}
+	%\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}&\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2},\\
+	%\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}&\geq \LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2},\\
+	%\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}+\alphamenos{P_S^{}}{P_{B'}^1}{P_{B'}^2}+\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2}& = 1,
+	%\end{align*}
+	%where $\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\US{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ are a lower and a upper bound for the determinant, respectively. If the determinant is strictly positive, then $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ must be one to make the first inequality feasible, the second inequality is always fulfilled and the third one sets the other indicator variables to zero. The analagous case happens if the determinant is strictly negative. However, if the determinant is equal to zero, both inequalities are fulfilled and it is necessary to include the term $\epsilon (1-\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2})$ in the objective function, where $\epsilon>0$ is a small value, to ensure that $\alphacero{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is equal to one when the determinant is zero.
+	%
+	%\newcommand{\betamas}[4]{\beta^{+}(#1#2|#3#4)}
+	%\newcommand{\betamenos}[4]{\beta^{-}(#1#2|#3#4)}
+	%\newcommand{\betacero}[4]{\beta^{0\,}(#1#2|#3#4)}
+	%
+	%At this point, it is required to introduce the binary variables that checks if both determinants are positive, negative or null:
+	%
+	%\begin{itemize}
+	%\item $\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both positive.
+	%\item $\betamenos{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both negative.
+	%\item $\betacero{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}$, that is one if $\determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ and $\determinant{P_B^i}{P_{B'}^1}{P_{B'}^2}$ are both zero.
+	%\end{itemize}
+	%
+	%Hence, the $\beta$ variables can be represented by the product of the $\alpha$ variables:
+	%\begin{align*}
+	%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=\alpha{P_{B'}^1}{P^{}_S}{P^i_B}\:\alpha{P_{B'}^2}{P^{}_S}{P^i_B},\\
+	%\betamenos{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=\alphamenos{P_{B'}^1}{P^{}_S}{P^i_B}\:\alphamenos{P_{B'}^2}{P^{}_S}{P^i_B},\\
+	%\betacero{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2}&=\alphacero{P_{B'}^1}{P^{}_S}{P^i_B}\:\alphacero{P_{B'}^2}{P^{}_S}{P^i_B}.
+	%\end{align*}
+	%
+	%These products can be linearized by means of these constraints:
+	%$$
+	%\left\{\begin{array}{rcl}
+		%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \leq & \alpha{P_{B'}^1}{P^{}_S}{P^i_B},\\\\
+		%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \leq & \alpha{P_{B'}^2}{P^{}_S}{P^i_B},\\\\
+		%\betamas{P_S^{}}{P_B^i}{P_{B'}^1}{P_{B'}^2} & \geq & \alpha{P_{B'}^1}{P^{}_S}{P^i_B} + \alpha{P_{B'}^2}{P^{}_S}{P^i_B} - 1.\end{array}\right.
+	%$$
+	%
+	% $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ that attains minus one if the sign of the determinant is negative, zero, if the determinant is zero, and one, if the determinant is positive. The following constraints set the sign condition:
+	%\begin{equation}\tag{sign}\label{eq:sign}
+	%\LS{P_S^{}}{P_{B'}^1}{P_{B'}^2}\:\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \determinant{P_S^{}}{P_{B'}^1}{P_{B'}^2}\leq \US{P_S^{}}{P_{B'}^1}{P_{B'}^2})\left(1-\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}\right),
+	%\end{equation}
+	% If the determinant is negative, then the right side of the equation must be zero, and $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is one. Analogously, if the determinant is non-negative, then the left side must be zero and $\alpha{P_S^{}}{P_{B'}^1}{P_{B'}^2}$ is also zero.
+	%
+	%%In the left picture, the number of incident edges $|E_S|$ on $N_S$ is 4 whereas the right picture is 6.
+	
+	\section{Strengthening the formulations}\label{section:strengthening}
+	\textcolor{red}{Incluir el resultado estructural que da una cota superior del numero de bolas que se puede generar}
+	\subsection{Preprocessing}\label{subsection:preprocessing}
+	In this subsection, a preprocessing result that allows to fix some variables is shown by taking into account the relative position between the neighborhoods and the barriers.
+	In particular, we are going to present an outcome that ensures that there are some barriers whose endpoints can not be incident in the edges of $\EN$ and it is not necessary to include it in $\EN$. 
+	
+	Let denote
+	
+	\begin{align*}
+		\text{cone}(P,Q,R)&:=\{\mu_1 \overrightarrow{PQ}+\mu_2\overrightarrow{PR}:\mu_1,\mu_2\geq 0\},\\
+		\text{cone}(P,Q,R)^-&:=\{\mu_1 \overrightarrow{PQ}+\mu_2\overrightarrow{PR}:\mu_1,\mu_2\geq 0,\:\mu_1+\mu_2\leq 1\},\\
+		\text{cone}(P,Q,R)^+&:=\{\mu_1 \overrightarrow{PQ}+\mu_2\overrightarrow{PR}:\mu_1,\mu_2\geq 0,\:\mu_1+\mu_2\geq 1\}.
+	\end{align*}
+	Note that $cone(P, Q, R)$ is the union of $\text{cone}(P,Q,R)^-$ and $\text{cone}(P,Q,R)^+$. It is also important to remark that $\text{cone}(P,Q,R)^+$ is the part of cone that crosses the barrier $\overline{QR}$ when we consider a segment whose endpoints are $P$ and another point of this set, i.e.
+	$$\text{cone}(P,Q,R)^+=\{P':\overline{PP'}\cap\overline{QR}\neq\emptyset\}.$$
+	
+	Let $B = \overline{P^1_BP^2_B}\in\mathcal B$ a barrier. In the following proposition, we give a sufficient condition to not include the edge $(P^{}_N, P^i_B)$ in $\EN$:
+	
+	\begin{prop}
+		
+		Let $B'=\overline{P^1_{B'}P^2_{B'}}\in\mathcal B$ and $\normalfont{\text{cone}}(P^i_B, P^1_{B'}, P^2_{B'})^+$ the conical hull generated by these points. If
+		$$N\subset\bigcup_{B'\in\mathcal B}\normalfont{\text{cone}}(P^i_B, P^1_{B'}, P^2_{B'})^+,$$
+		then $(P^{}_N, P^i_B)\not\in \EN$.
+		
+		%Let $B'=\overline{P^1_{B'}P^2_{B'}}\in\mathcal B$ and $Q(B')$ the intersection point of the straight lines that join points of $N$ and $B'$ that lies outside of the convex hull generated by thse line segments. Let $\normalfont{\text{cone}}(\{\overrightarrow{Q(B')P^1_N},\overrightarrow{Q(B')P^2_N}\})$ the conical hull of these vectors. If
+		%$$B\subset\bigcup_{B'\in\mathcal B}\normalfont{\text{cone}}(\{\overrightarrow{Q(B')P^1_N},\overrightarrow{Q(B')P^2_N}\}),$$
+		%then $(P^{}_N, P^i_{B})\not\in \EN$, $i=1,2$.
+	\end{prop}
+	\begin{proof}
+		If $P_N\in N$, then there exists a $B'\in\mathcal B$ such that 
+		$P_N\in \normalfont{\text{cone}}(P^i_B, P^1_{B'}, P^2_{B'})^+$. Therefore, $\overline{P^i_B P^{}_N}\cap B'\neq\emptyset$ and $(P^{}_N, P^i_B)\not\in \EN$, as we claimed.
+	\end{proof}
+	
+	We can check computationally the condition of the previous proposition by using the following procedure. The first issue that is solved is the one when the neighborhoods are segments. Let $N = \overline{P^1_N P^2_N}$ be a line segment and $r_N$ the straight line that contains the line segment $N$ that is represented as:
+	
+	$$r_N:P_N^1+\lambda\overrightarrow{P_N^1P_N^2},\qquad\lambda\in\mathbb R.$$
+	
+	
+	\begin{algorithm}[H]
+		\caption{Checking computationally if $(P^{}_N, P^i_B)\not\in \EN$ when $N$ is a segment.}
+		\label{alg:Algorithm1}
+		\SetKwInOut{Input}{Initialization}\SetKwInOut{Output}{output}
+		
+		\Input{Let $P^i_B$ be the point whose edge $(P^{}_N, P^i_B)$ is going to check if $(P^{}_N, P^i_B)\not\in \EN$.\\
+			Set $points = \{P^1_N, P^2_N\}$, $lambdas=\{0, 1\}$.}
+		% Set $LB=0$, $UB=+\infty$, $\bar z=z^0$.
+		\For{$B''\in\mathcal B$}{
+			\For{$j\in\{1, 2\}$}{
+				Compute the straight line 
+				$$r(P^i_B, P^j_{B''}) = P^i_B + \mu^j_{B''}\overrightarrow{P^i_BP^j_{B''}},$$ 
+				that contains the points $P^i_B$ and $P^j_{B''}$. \\
+				
+				Intersect $r(P^i_B, P^j_{B''})$ and $r_N$ in the point $Q^j_{B''}$ and compute $			\overline{\mu}^j_{B''}$ such that 
+				$$Q^j_{B''}=P_B^i + \overline{\mu}^j_{B''} \overrightarrow{P^i_BP^j_{B''}}.$$\\
+				
+				\If{$|\overline{\mu}^j_{B''}|\geq 1$}{
+					Compute $\lambda^j_{B''}$ such that 
+					$$Q^j_{B''}=P^1_N+\lambda^j_{B''}\overrightarrow{P^1_NP^2_N}.$$\\
+					\If{$\overline{\mu}^j_{B''}\geq 1$}{
+						Include $\lambda^j_{B''}$ in $lambdas$.}
+					\Else{
+						\If{$\lambda^j_{B''}\geq 0$}{
+							Set $\lambda^j_{B''}=M<<0$ and include it in $lambdas$.}
+						\Else{
+							Set $\lambda^j_{B''}=M>>0$ and include it in $lambdas$.}
+					}	
+				}
+			}
+		}
+		Order in non-decreasing order the set $lambdas$.\\
+		If it is verified that
+		\begin{align*}
+			\min\{\lambda_{B'}^1, \lambda_{B'}^2\}\leq 0\leq\max\{\lambda_{B'}^1, \lambda_{B'}^2\},&\quad\text{ for some } B'\in\mathcal B,\\
+			\min\{\lambda_{B'}^1, \lambda_{B'}^2\}\leq 1\leq\max\{\lambda_{B'}^1, \lambda_{B'}^2\},&\quad\text{ for some } B'\in\mathcal B,\\
+			\min\{\lambda_{B'}^1, \lambda_{B'}^2\}\leq\lambda_{B''}^j\leq\max\{\lambda_{B'}^1, \lambda_{B'}^2\},&\quad\text{ for some } B'\in\mathcal B\setminus\{B''\},\quad\forall \lambda_{B''}^j\in lambdas\setminus\{M\},
+		\end{align*}
+		or
+		$$
+		\min\{\lambda_{B'}^1, \lambda_{B'}^2\}\leq 0, 1\leq\max\{\lambda_{B'}^1, \lambda_{B'}^2\},\quad\text{ for some } B'\in\mathcal B,
+		$$
+		then $(P^{}_N, P^i_B)\not\in \EN$.
+		
+	\end{algorithm}
+	
+	\input{figures/Preprocessing - First case}
+	
+	Note that this algorithm also allows us to decide if the drone can access to a point of a barrier from any point of the neighborhood $N$. It is enough to check in (15) that 
+	$$0\not\in \left[\min\{\lambda_{B'}^1, \lambda_{B'}^2\},\max\{\lambda_{B'}^1, \lambda_{B'}^2\}\right]\quad\text{and}\quad 1\not\in \left[\min\{\lambda_{B'}^1, \lambda_{B'}^2\},\max\{\lambda_{B'}^1, \lambda_{B'}^2\}\right],\quad\forall B'\in\mathcal B.$$
+	
+	For the case when $N$ is an ellipse, the same rationale can be followed. The idea is to generate the largest line segment contained in the ellipse and repeat the procedure exposed in the Algorithm \ref{alg:Algorithm1}. Let $F_1$ and $F_2$ the focal points of $N$.
+	
+	\begin{algorithm}[H]
+		\caption{Checking computationally if $(P^{}_N, P^i_B)\not\in \EN$ when $N$ is an ellipse.}
+		\label{alg:Algorithm2}
+		\SetKwInOut{Input}{Initialization}\SetKwInOut{Output}{output}
+		
+		\Input{Let $P^i_B$ be the point whose edge $(P^i_B, P^{}_N)$ is going to check if $(P^{}_N, P^i_B)\not\in \EN$.\\
+			Set $points = \{\}$, $lambdas=\{\}$.}
+		% Set $LB=0$, $UB=+\infty$, $\bar z=z^0$.}
+	Compute the straight line $r(F^1, F^2)$.\\
+	Intersect $r(F^1, F^2)$ and $\partial N$ in the points $P_N^1$ and $P_N^2$. \\
+	Include $P_N^1$ and $P_N^2$ in $points$. \\
+	Apply the Algorithm \ref{alg:Algorithm1}.
+\end{algorithm}
+
+
+\textcolor{red}{Estudiar resultados que eliminen algunas de las posibles aristas de $E_S$ y $E_T$}
+\textcolor{red}{Hablar que las aristas $E_{\mathcal B}$ se pueden preprocesar porque los puntos están fijados}
+
+\CV{Es posible encontrar un caso en el que utilizar la barrera como arista sea lo mejor?}
+
+\subsection{Valid inequalities}
+This subsection is devoted to show some results that adjust the bigM constants that appear in the previous formulation, specifically, in the \eqref{eq:alphaC}, where the modelling of the sign requires to compute the lower and upper bounds $L$ and $U$, respectively. We are going to determine these bounds explicitly for the cases when the neighborhoods are ellipses and segments.
+
+Let $\overline{P^1_{B'}P^2_{B'}}=B'\in\B$ be a barrier and $P_N\in N$. Let $\determinant{P_N}{P_{B'}^1}{P_{B'}^2}$ also be the determinant whose value must be bounded. Hence, the solution of the following problem gives the lower bound of the determinant:
+\begin{equation*}\label{eq:L-Problem}\tag{L-Problem}
+	\overline{L}=\min_{P_N=(x,y)\in N}F(x,y):=\determinant{P^{}_N}{P_{B'}^1}{P_{B'}^2}=\left|
+	\begin{array}{cc}
+		P^{1}_{B'_x}-x & P^{2}_{B'_x}-x \\
+		P^{1}_{B'_y}-y & P^{2}_{B'_y}-y
+	\end{array}
+	\right|.
+\end{equation*}
+
+\subsubsection{Lower and upper bounds when the neighborhoods are line segments}
+In this case, the segment whose endpoints are $P^1_{N}$ and $P^2_{N}$ can be expressed as the following convex set:
+$$N=\{(x,y)\in\mathbb R^2:(x,y)=\mu P^1_{N}+(1-\mu)P^2_{N}, \; 0\leq\mu\leq1\}.$$
+Since we are optimizing a linear function in a compact set we can conclude that the objective function in \eqref{eq:L-Problem} achieves its minimum and its maximum in the extreme points of $N$, that is, in $P^1_{N}$ and $P^2_{N}$. 
+
+\subsubsection{Lower and upper bounds when the neighborhoods are ellipsoids}
+The first case that is considered is the one when $N$ is an ellipse, that is, $N$ is represented by the following inequality:
+$$N=\{(x,y)\in\mathbb R^2:ax^2+by^2+cxy+dx+ey+f\leq 0\}=$$
+where $a, b, c, d, e, f$ are coefficients of the ellipse.
+In an extended form, we need to find:
+\begin{mini*}
+	{}{F(x, y)=\left|
+		\begin{array}{cc}
+			P^{1}_{B'_x}-x & P^{2}_{B'_x}-x \\
+			P^{1}_{B'_y}-y & P^{2}_{B'_y}-y
+		\end{array}
+		\right|=xP^{1}_{B'_y}-xP^{2}_{B'_y}+yP^{2}_{B'_x}-yP^{1}_{B'_x}+P^{1}_{B'_x}P^{2}_{B'_y}-P^{1}_{B'_y}P^{2}_{B'_x},}
+	{\label{eq:L-Ellipse}}{\tag{L-Ellipse}}
+	\addConstraint{ax^2+by^2+cxy+dx+ey+f\leq 0.}
+\end{mini*}
+Since we are minimizing a linear function in a convex set, we can conclude that the extreme points are located in the frontier, so we can use the Lagrangian function to compute these points.
+$$F(x,y;\lambda)=xP^{1}_{B'_y}-xP^{2}_{B'_y}+yP^{2}_{B'_x}-yP^{1}_{B'_x}+P^{1}_{B'_x}P^{2}_{B'_y}-P^{1}_{B'_y}P^{2}_{B'_x}+\lambda(ax^2+by^2+cxy+dx+ey+f).$$
+
+$$\nabla F(x,y;\lambda)=0\Longleftrightarrow
+\left\{\begin{array}{rcll}
+	\frac{\partial F}{\partial x} & = & P^{1}_{B'_y}-P^{2}_{B'_y}+2ax\lambda+cy\lambda+d\lambda& =0,\\
+	\frac{\partial F}{\partial y} & = & P^{2}_{B'_x}-P^{1}_{B'_x}+2by\lambda+cx\lambda+e\lambda& =0,\\
+	\frac{\partial F}{\partial \lambda} & = & ax^2+by^2+cxy+dx+ey+f& =0.\\
+\end{array}\right.$$
+From the first two equations we can obtain:
+
+$$\lambda = \frac{P^{2}_{B'_y}-P^{1}_{B'_y}}{2ax+cy+d}=\frac{P^{1}_{B'_x}-P^{2}_{B'_x}}{2by+cx+e}.$$
+
+From this equality, we obtain the following general equation of the straight line:
+\begin{align*}
+	(P^{2}_{B'_y}-P^{1}_{B'_y})(2by+cx+e)-(P^{1}_{B'_x}-P^{2}_{B'_x})(2ax+cy+d)&=0,\\
+	\left[c(P^2_{B'_y}-P^1_{B'_y})-2a(P^1_{B'_x}-P^2_{B'_x})\right]x+\left[2b(P^2_{B'_y}-P^1_{B'_y})-c(P^1_{B'_x}-P^2_{B'_x})\right]y+\left[e(P^2_{B'_y}-P^1_{B'_y})-d(P^1_{B'_x}-P^2_{B'_x})\right]&=0,\\
+	\left[(2a, c)\cdot\overrightarrow{P^1_{B'}P^2_{B'}}\right]x+\left[(c, 2b)\cdot\overrightarrow{P^1_{B'}P^2_{B'}}\right]y+\left[(d, e)\cdot\overrightarrow{P^1_{B'}P^2_{B'}}\right]&=0,
+%	y\left[2b(P^{2}_{B'_y}-P^{1}_{B'_y})-c(P^{1}_{B'_x}-P^{2}_{B'_x})\right]&=\left[2a(P^{1}_{B'_x}-P^{2}_{B'_x})-c(P^{2}_{B'_y}-P^{1}_{B'_y})\right]x+\left[d(P^{1}_{B'_x}-P^{2}_{B'_x})-e(P^{2}_{B'_y}-P^{1}_{B'_y})\right],\\
+%	y&=\left[\frac{2a(P^{1}_{B'_x}-P^{2}_{B'_x})-c(P^{2}_{B'_y}-P^{1}_{B'_y})}{2b(P^{2}_{B'_y}-P^{1}_{B'_y})-c(P^{1}_{B'_x}-P^{2}_{B'_x})}\right]x+\left[\frac{d(P^{1}_{B'_x}-P^{2}_{B'_x})-e(P^{2}_{B'_y}-P^{1}_{B'_y})}{2b(P^{2}_{B'_y}-P^{1}_{B'_y})-c(P^{1}_{B'_x}-P^{2}_{B'_x})}\right],\\
+%	y&=mx+n.
+\end{align*}
+where $\cdot$ denotes the scalar product of two vectors. 
+Solving the quadratic system:
+$$
+\left\{\begin{array}{rl}
+	\left[(2a, c)\cdot\overrightarrow{P^1_{B'}P^2_{B'}}\right]x+\left[(c, 2b)\cdot\overrightarrow{P^1_{B'}P^2_{B'}}\right]y+\left[(d, e)\cdot\overrightarrow{P^1_{B'}P^2_{B'}}\right]&=0,\\
+	ax^2+by^2+cxy+dx+ey+f& =0.\\
+\end{array}\right.$$
+
+produces two solutions $x^{\pm}$ and $y^{\pm}$ that are evaluated in the objective function to obtain the lowest and highest value correspond to $\LS{P_N^{}}{P_{B'}^1}{P_{B'}^2}$ and $\US{P_N^{}}{P_{B'}^1}{P_{B'}^2}$, respectively. Upper and lower bounds 
+
+\CV{
+	\section{Computational experiments}
+	The following section is devoted to study the behaviour of the formulations proposed in the Section \ref{section:formulations}. In the first subsection, the procedure of generating random instances is described. The second  details the configuration of the experiments that have been executed. The third subsection reports the results obtained in these experiments.
+	
+	\subsection{Data generation}
+	%To generate the instances of our experiments, it is necessary that these instances verify the assumptions \ref{A1}-\ref{A4} stated in the Section \ref{section:description}. 
+	
+	To generate the instances of our experiments, we will take into account the assumptions \ref{A1}-\ref{A4} stated in the Section \ref{section:description}. The idea is to generate line segments located in a general position without crossings and neighborhoods that do not intersect with these line segments. The following procedure describes how to construct the instances when the neighborhoods are balls.
+	
+	\begin{algorithm}[H]
+		\caption{Generation of instances when the neighborhoods are balls}
+		\label{alg:Algorithm3}
+		\SetKwInOut{Input}{Initialization}\SetKwInOut{Output}{output}
+		
+		\Input{Let $|\mathcal N|$ be the number of neighborhoods to generate. Let $r_{\text{init}}=10$ be the half of the initial length of the barriers.
+			Set $\mathcal N = \{\}$; $points=\{\}$; $\mathcal B=\{\overline{(0, 0)(100, 0)}, \overline{(100, 0)(100, 100)}, \overline{(100, 100)(0, 100)}, \overline{(0, 100)(0, 0)}\}$.}
+		% Set $LB=0$, $UB=+\infty$, $\bar z=z^0$.
+		Generate $|\mathcal N|$ points uniformly distributed in the square $[0, 100]^2$ and include them in $points$. \\
+		%\While{There does not exist a barrier that separates each pair of points}{
+			\For{$P, P'\in points$}{
+				\If{$\overline{PP'}\cap B=\emptyset,\;\forall B\in\mathcal B$}{
+					Compute $\overrightarrow{d}=\overrightarrow{PP'}$.\\
+					Compute $M = P + \frac 1 2 \overrightarrow{d}$.\\
+					Compute the unitary vector $\overrightarrow{n_u}$ perpendicular to $\overrightarrow{d}$.\\
+					Set $r = r_{\text{init}}$. \\
+					Generate the barrier $B(r)=\overline{P_B^{+} P_B^{-}}$ where
+					$P_B^{\pm}=M \pm r\overrightarrow{n_u}.$\\
+					\While{$B(r)\cap B'\neq\emptyset$ for some $B'\in\mathcal B$}{
+						Set $r := r / 2$. \\
+						Generate the barrier $B(r)$.
+					}
+					
+					Include $B(r)$ in $\mathcal B$.
+					
+					
+				}
+			}
+			\For{$P\in points$}{
+				Set $r_{\text{min}}=\min_{\{P_B\in B: B \in\mathcal B\}} d(P, P_B).$\\
+				Generate a random $radii$ uniformly distributed in the interval $\left[\frac 1 2 r_{\text{min}}, r_{\text{min}}\right]$.\\
+				Set the ball $N$ whose center is $P$ and radii is $radii$. \\
+				Include $N$ in $\mathcal N$.
+			}
+			%}
+	\end{algorithm}
+	
+	To generate the instances when the neighborhoods are segments, we can take the balls built in the previous procedure and draw a random angle that determines which point and its diametrically opposite point are selected as the endpoints of the line segment.
+	
+	
+	\subsection{Configuration of the experiments}
+	Since no benchmark instances are available in the literature for this problem, we have generated ten instances with a number $|\mathcal N|\in\{5, 10, 20, 30, 50, 80\}$ of two typologies: balls and line segments. We have considered the cases with and without preprocessing the variables of the formulations as explained in Subsection \ref{subsection:preprocessing} and we have reported the average results. 
+	
+	The formulations were coded in Python 3.9.2 and solved in Gurobi 9.1.2 \cite{GurobiOptimization2021} in a \textcolor{red}{AMD® Epyc 7402p 24-core processor}. A time limit of 1 hour was set in the experiments.
+	
+}
+\subsection{Results of the experiments}
+
+\input{figures/runtime_boxplot_first_experiment}
+
+
+\end{document}

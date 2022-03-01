@@ -10,7 +10,7 @@ en el documento xpp_segmentos2.
 
 # Paquetes
 import numpy as np
-import entorno as e
+import neighborhood as e
 import matplotlib.pyplot as plt
 import random
 from copy import copy
@@ -103,7 +103,7 @@ class Data(object):
         self.olddata = copy(self.data)
         self.data = []
 
-    def elimina_entornos(self, lista):
+    def elimina_neighborhoods(self, lista):
         self.data = np.delete(self.data, lista)
         self.m = self.m - len(lista)
 
@@ -111,11 +111,11 @@ class Data(object):
         datos = copy(self.data)
         self.data = []
         if self.modo == 1:
-            for entorno in datos:
-                P = entorno.P
-                q = entorno.q
-                radio = entorno.radio*(1 - porcentaje)
-                r = entorno.centro[0]**2 + entorno.centro[1]**2 - radio**2
+            for neighborhood in datos:
+                P = neighborhood.P
+                q = neighborhood.q
+                radio = neighborhood.radio*(1 - porcentaje)
+                r = neighborhood.centro[0]**2 + neighborhood.centro[1]**2 - radio**2
                 self.data.append(e.Elipse(P, q, r))
 
     def recupera_radio(self):

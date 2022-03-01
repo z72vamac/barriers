@@ -227,7 +227,7 @@ The main goal of the \SPPN\  is to solve a shortest path problem in the undirect
 \item $\ES=\{(P_S, P^i_{B}):P^i_B\in V_\B\text{ and } \overline{P_SP^i_B}\cap B''=\emptyset,\forall B''\in\B,\:i=1,2\}$: set of edges formed by the line segments that join the point selected in the source neighborhood and every endpoint in the barriers that do not cross any barrier in $\B$.
 \item $\EB=\{(P^{i}_B, P^{j}_{B'}):P^i_B, P^j_{B'}\in \VB \text{ and } \overline{P^i_B P^j_{B'}}\cap B''=\emptyset,\:\forall B''\in\mathcal B,\:i, j=1,2\}$: set of edges formed by the line segments that join two vertices of $V_{\mathcal B}$ and do not cross any barrier in $\B$.
 \item $\ET=\{(P^{}_T, P^i_{B}):P^i_B\in V_\B\text{ and } \overline{P^{}_TP^i_B}\cap B''=\emptyset,\forall B''\in\B,\:i=1,2\}$: set of edges formed by the line segments that join the point selected in the target neighborhood and every endpoint in the barriers that do not cross any barrier in $\B$.
-\textcolor{red}{Definimos tambien la arista que pueda unir a los dos entornos o asumimos que no hay un camino que los una? Depende del caso que consideremos el problema es convexo o no.}
+\textcolor{red}{Definimos tambien la arista que pueda unir a los dos neighborhoods o asumimos que no hay un camino que los una? Depende del caso que consideremos el problema es convexo o no.}
 \end{itemize} 
 
 At this point, we can define the graph $G= (V, E)$ induced by the barriers and the neighborhoods, where $V=\VS\cup \VB\cup\VT$ and $E=\ES\cup\EB \cup\ET$. It is interesting to note that this graph can be split into two parts: a fixed graph $G_\B=(\VB,\EB)$ whose edges can be computed by using the Remark \ref{rem:determinants} and the sets $\VS$, $\ES$, $\VT$ and $\ET$ that depend on where the points $P_S$ and $P^{}_T$ are located as shown in Figure \ref{fig:graph}.  The figures show how the graph $G$ is generated. The blue dashed line segments represent the edges of $\ES$, the green ones, the edges of $\ET$ and the red dashed lines, the edges of $\EB$. A special case that can be remarked occurs when the neighborhoods are points. In that case, the induced graph is completely fixed and it is only necessary to find which edges are included by keeping in mind that there can not have crossings. This idea is exploited in Subsection \ref{section:reformulation}.
@@ -310,13 +310,13 @@ The objective function minimizes the length of the path followed by the drone on
 The formulation for the \SPPN \ presented above can be simplified by taking into account the following observation.
 \begin{prop}
 There exists a finite dominant set, $N_S^*$, of possible candidates to be in  $N_S$. Moreover,
-$$N_S^*=\{P_S(P_B^i)=\argmin_{P\in N_S} \|P_B^i - P\|:P_B^i\in V_{\mathcal B}\}.$$
+$$N_S^*=\{P_S(P_B^i)=\argmin_{P\in N_S} \|P_S - P_B^i\|:(P, P_B^i)\in E_S\}.$$
 \end{prop}
 \begin{proof}
-Note that the point selected in $N_S$ in an optimal solution for \SPPN \ must the one that gives the minimum distance to the point of the first visited barrier in the optimal solution. Therefore, $N^*$ must be composed, at most, by points in the set $\{P_S(P_B^i)=\argmin_{P\in N_S} \|P_B^i - P\|:P_B^i\in V_{\mathcal B}\}$.
+Note that the point selected in $N_S$ in an optimal solution for \SPPN \ must the one that gives the minimum distance to the point of the first visited barrier in the optimal solution. Therefore, $N^*$ must be composed, at most, by points in the set $\{P_S(P_B^i)=\argmin_{P\in N_S} \|P_S - P_B^i\|:(P, P_B^i)\in E_S\}$.
 \end{proof}
 Therefore, we can compute the set $N_S^*$ by solving a convex problem for each endpoint of the barriers:
-$$N_S^*=\{P_S(P_B^i)=\argmin_{P\in N_S} \|P_B^i - P\|:P_B^i\in V_{\mathcal B}\}.$$
+$$N_S^*=\{P_S(P_B^i)=\argmin_{P_S\in N_S} \|P_S - P_B^i\|:(P_S, P_B^i)\in E_S\}.$$
 Moreover, the point chosen in the solution, $P_S$ ,can be represented by the points in $N^*$ as shown below:
 \begin{align*}\tag{N$^*$-C}\label{eq:nCs}
 P_S&=\sum_{P_B^i\in V_{\mathcal B}}\mu_S(P_B^i)P_S(P_B^i),\\
@@ -600,6 +600,8 @@ Apply the Algorithm \ref{alg:Algorithm1}.
 
 \textcolor{red}{Estudiar resultados que eliminen algunas de las posibles aristas de $E_S$ y $E_T$}
 \textcolor{red}{Hablar que las aristas $E_{\mathcal B}$ se pueden preprocesar porque los puntos están fijados}
+
+\CV{Es posible encontrar un caso en el que utilizar la barrera como arista sea lo mejor?}
 
 \subsection{Valid inequalities}
 This subsection is devoted to show some results that adjust the bigM constants that appear in the previous formulation, specifically, in the \eqref{eq:alphaC}, where the modelling of the sign requires to compute the lower and upper bounds $L$ and $U$, respectively. We are going to determine these bounds explicitly for the cases when the neighborhoods are ellipses and segments.

@@ -1,5 +1,5 @@
 # Con la formulacion nueva
-# Shortest path por entornos con barriers
+# Shortest path por neighborhoods con barriers
 
 import gurobipy as gp
 from gurobipy import GRB
@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
 from matplotlib.collections import PatchCollection
 from data import *
-from entorno import Circulo, Poligonal
+from neighborhood import Circle, Poligonal
 import copy
 import estimacion_M as eM
 from auxiliar_functions import *
@@ -39,16 +39,16 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
     #
     #     return flag1 | flag2
     
-    def no_ve(entorno, punto):
-        if type(entorno) is Circulo:
-            centro = entorno.center
+    def no_ve(neighborhood, punto):
+        if type(neighborhood) is Circle:
+            centro = neighborhood.center
             
             dr = np.array(centro) - np.array(punto)
             dr_u = dr / np.linalg.norm(dr)
             
             nr_u = np.array([-dr_u[1], dr_u[0]])
             
-            lambdas = np.linspace(-entorno.radii, entorno.radii, 20)
+            lambdas = np.linspace(-neighborhood.radii, neighborhood.radii, 20)
             
             # flag1 representa si corta alguna o no
             # flag2 representa si todos los puntos tienen algun corte
@@ -70,21 +70,21 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
                 
             return flag2
                            
-            # punto1 = np.array(centro) + entorno.radii*nr_u
+            # punto1 = np.array(centro) + neighborhood.radii*nr_u
             # segmento1 = [punto, punto1]
             # flag1 = any([not(nocortan(segmento1, barrera)) for barrera in barriers])
             #
-            # punto2 = np.array(centro) - entorno.radii*nr_u
+            # punto2 = np.array(centro) - neighborhood.radii*nr_u
             # segmento2 = [punto, punto2]
             # flag2 = any([not(nocortan(segmento2, barrera)) for barrera in barriers])
             
-        if type(entorno) is Poligonal:
+        if type(neighborhood) is Poligonal:
             
-            nr = np.array(entorno.V[1]) - np.array(entorno.V[0])
+            nr = np.array(neighborhood.V[1]) - np.array(neighborhood.V[0])
             
             nr_u = nr / np.linalg.norm(nr)
             
-            lambdas = np.linspace(0, entorno.longitud, 20)
+            lambdas = np.linspace(0, neighborhood.longitud, 20)
 
             flag2 = True
 
@@ -92,7 +92,7 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
                 
                 for barrera in barriers:
                     flag1 = False
-                    if not(nocortan([punto, np.array(entorno.V[0]) + landa*nr_u], [barrera[0], barrera[1]])):
+                    if not(nocortan([punto, np.array(neighborhood.V[0]) + landa*nr_u], [barrera[0], barrera[1]])):
                         flag1 = True
                         break
                 
@@ -104,8 +104,8 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
             return flag2        
             
         
-    def ve(entorno, punto):
-        return not(no_ve(entorno, punto))
+    def ve(neighborhood, punto):
+        return not(no_ve(neighborhood, punto))
         
         
     
@@ -390,17 +390,17 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
     
     # NS and NT constraints
     for a, dim in P.keys():
-        entorno = N[abs(a)-1]
+        neighborhood = N[abs(a)-1]
         
-        if type(entorno) is Circulo:
+        if type(neighborhood) is Circle:
             MODEL.addConstr(dif_inside[a, dim] >= P[a, dim] - N[abs(a)-1].center[dim])
             MODEL.addConstr(dif_inside[a, dim] >= N[abs(a)-1].center[dim] - P[a, dim])
         
             MODEL.addConstr(gp.quicksum(dif_inside[a, dim]*dif_inside[a, dim] for dim in range(2)) <= d_inside[a]*d_inside[a])
             MODEL.addConstr(d_inside[a] <= N[abs(a)-1].radii)
         
-        if type(entorno) is Poligonal:
-            MODEL.addConstrs(P[a, dim] == landa[a]*entorno.V[0][dim] + (1-landa[a])*entorno.V[1][dim] for dim in range(2))
+        if type(neighborhood) is Poligonal:
+            MODEL.addConstrs(P[a, dim] == landa[a]*neighborhood.V[0][dim] + (1-landa[a])*neighborhood.V[1][dim] for dim in range(2))
         
     
     # MODEL.addConstr(y[-1, 2, 1] >= 0.5)
@@ -441,50 +441,50 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
     U_out = 10000
         
     
-    def estima_L(entorno, punto):
-        if type(entorno) is Circulo:
-            centro = entorno.center
-            dist = np.linalg.norm(np.array(centro) - np.array(punto)) - entorno.radii
+    def estima_L(neighborhood, punto):
+        if type(neighborhood) is Circle:
+            centro = neighborhood.center
+            dist = np.linalg.norm(np.array(centro) - np.array(punto)) - neighborhood.radii
             
             # dist = 0
         
-        if type(entorno) is Poligonal:
-            dr = np.array(entorno.V[1]) - np.array(entorno.V[0])
+        if type(neighborhood) is Poligonal:
+            dr = np.array(neighborhood.V[1]) - np.array(neighborhood.V[0])
             
             A, B = -dr[1], dr[0]
             
-            C = -A*entorno.V[0][0] - B*entorno.V[0][1]
+            C = -A*neighborhood.V[0][0] - B*neighborhood.V[0][1]
             
             dist = abs(A*punto[0] + B*punto[1] + C)/np.sqrt(A**2 + B**2)
             
         return dist
     
-    def estima_U(entorno, punto):
-        if type(entorno) is Circulo:
+    def estima_U(neighborhood, punto):
+        if type(neighborhood) is Circle:
             
-            dist = np.linalg.norm(np.array(entorno.center) - np.array(punto))+ entorno.radii
+            dist = np.linalg.norm(np.array(neighborhood.center) - np.array(punto))+ neighborhood.radii
             
             # dist = 10000
             
-        if type(entorno) is Poligonal:
+        if type(neighborhood) is Poligonal:
             
-            dist = max([np.linalg.norm(np.array(entorno.V[i]) - np.array(punto)) for i in range(2)])
+            dist = max([np.linalg.norm(np.array(neighborhood.V[i]) - np.array(punto)) for i in range(2)])
         
         return dist
     
     # p constraints
     for a, b, c in p.keys():
         if a < 0:
-            entorno = N[abs(a) - 1]
+            neighborhood = N[abs(a) - 1]
             punto = barriers[b][c]
-            L_out = estima_L(entorno, punto)
-            U_out = estima_U(entorno, punto)
+            L_out = estima_L(neighborhood, punto)
+            U_out = estima_U(neighborhood, punto)
         
         if c < 0:
-            entorno = N[abs(c) - 1]
+            neighborhood = N[abs(c) - 1]
             punto = barriers[a][b]
-            L_out = estima_L(entorno, punto)
-            U_out = estima_U(entorno, punto)
+            L_out = estima_L(neighborhood, punto)
+            U_out = estima_U(neighborhood, punto)
                         
         MODEL.addConstr(p[a, b, c] >= L_out*y[a, b, c])
         MODEL.addConstr(p[a, b, c] >= dist[a, b, c] - U_out*(1 - y[a, b, c]))
@@ -640,7 +640,7 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
             ax.plot([b[0][0], b[1][0]], [b[0][1], b[1][1]], c = 'red')
         
         for n in N:
-            ax.add_artist(n.figura)
+            ax.add_artist(n.artist)
         
         P_vals = MODEL.getAttr('x', P)
         # print(P_vals)
@@ -695,10 +695,10 @@ def HTSPS_with_prepro3(barriers, N, log = False, timeLimit = 7200, init = False)
 # barriers = [barrier1, barrier2, barrier3, barrier4, barrier5]
 # # barriers.append(barrier6)
 #
-# N1 = Circulo(center = [20, 10], radii = 10)
-# N2 = Circulo(center = [90, 90], radii = 5)
-# N3 = Circulo(center = [40, 90], radii = 10)
-# N4 = Circulo(center = [85, 40], radii = 13)
+# N1 = Circle(center = [20, 10], radii = 10)
+# N2 = Circle(center = [90, 90], radii = 5)
+# N3 = Circle(center = [40, 90], radii = 10)
+# N4 = Circle(center = [85, 40], radii = 13)
 #
 # N = [N1, N2, N3, N4]
 #

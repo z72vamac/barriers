@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import Delaunay
 import networkx as nx
-from entorno import Circulo
+from neighborhood import Circle
 from matplotlib.patches import Circle
 from scipy.spatial import Voronoi, voronoi_plot_2d
 
@@ -64,9 +64,9 @@ bolas = []
 ax.set_aspect('equal')
 
 for c in V:
-    circulo = Circulo(center = c, radii = np.random.uniform(0, 0.5))
-    ax.add_artist(circulo.figura)
-    bolas.append([circulo.center[0], circulo.center[1], circulo.radii])
+    Circle = Circle(center = c, radii = np.random.uniform(0, 0.5))
+    ax.add_artist(Circle.figura)
+    bolas.append([Circle.center[0], Circle.center[1], Circle.radii])
 
 # plt.scatter(Vx, Vy, s = 20)
 
@@ -92,7 +92,7 @@ for i in range(len(V)):
             ax.plot([P1[0], P2[0]], [P1[1], P2[1]], '-', color = 'red')
     
             barreras.append([P1[0], P1[1], P2[0], P2[1]])
-# ax.add_artist(Circulo(center = [50, 50], radii = 50).figura)
+# ax.add_artist(Circle(center = [50, 50], radii = 50).figura)
 
 np.savetxt('segments.csv', barreras, delimiter = ",")
 
@@ -100,26 +100,26 @@ plt.show()
 
 # contador = 0
 #
-# circulos = []
+# Circles = []
 # while contador <= nN:
 #     vx = np.random.uniform(0+r, 100-r)
 #     vy = np.random.uniform(0+r, 100-r)
 #
 #     radio = np.random.uniform(0, r)
 #
-#     if all([np.linalg.norm(np.array([vx, vy])-np.array(circulo.center)) >= circulo.radii+radio+5 for circulo in circulos]):
-#         circulo_new = Circulo(center = [vx, vy], radii = radio)
-#         circulos.append(circulo_new)
+#     if all([np.linalg.norm(np.array([vx, vy])-np.array(Circle.center)) >= Circle.radii+radio+5 for Circle in Circles]):
+#         Circle_new = Circle(center = [vx, vy], radii = radio)
+#         Circles.append(Circle_new)
 #         contador += 1
 #
 #
 #
-# def genera_separacion(circulo1, circulo2):
-#     C1 = circulo1.center
-#     r1 = circulo1.radii
+# def genera_separacion(Circle1, Circle2):
+#     C1 = Circle1.center
+#     r1 = Circle1.radii
 #
-#     C2 = circulo2.center
-#     r2 = circulo2.radii
+#     C2 = Circle2.center
+#     r2 = Circle2.radii
 #
 #     # print((r1, r2))
 #
@@ -165,7 +165,7 @@ plt.show()
 #     return P1, P2
 #
 #
-# subconjuntos = circulos[0:10]
+# subconjuntos = Circles[0:10]
 #
 # fig, ax = plt.subplots()
 #
@@ -200,11 +200,11 @@ plt.show()
 #         ax.plot([P1[0], P2[0]], [P1[1], P2[1]], '-', color = 'red')
 #
 #         barreras.append([P1[0], P1[1], P2[0], P2[1]])
-# # ax.add_artist(Circulo(center = [50, 50], radii = 50).figura)
+# # ax.add_artist(Circle(center = [50, 50], radii = 50).figura)
 #
 # np.savetxt('segments.csv', barreras, delimiter = ",")
 #
 # plt.show()
 
     
-# genera_separacion(circulo1, circulo2) 
+# genera_separacion(Circle1, Circle2) 

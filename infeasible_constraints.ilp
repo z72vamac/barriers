@@ -1,0 +1,41 @@
+\ Model Dominant point of a neighborhood_copy
+\ LP format - for model browsing. Use MPS format to capture full model detail.
+Minimize
+ 
+Subject To
+ R8: - point[0] + dif_inside[0] >= -71.97149194729712
+ R9: - point[1] + dif_inside[1] >= -12.99360318644966
+ R10: point[0] + dif_inside[0] >= 71.97149194729712
+ R12: dist_inside <= 1.323527433721807
+ R768: 1e+06 alpha[1,0,29] <= 999838.8802336532
+ R770: 8.530396950668063 point[0] + 1.872924737818906 point[1]
+   - 1e+06 alpha[2,0,29] >= -999359.7816730177
+ R771: 4.942335092826113 point[0] - 17.8025882695794 point[1]
+   - 1e+06 alpha[3,0,29] <= -138.8350311581985
+ R773: alpha[0,0,29] - alpha[1,0,29] - mu[0,0,0,29] + mu[1,0,0,29] = 0
+ R776: alpha[2,0,29] - alpha[3,0,29] - mu[0,1,0,29] + mu[1,1,0,29] = 0
+ R779: mu[0,0,0,29] + mu[0,1,0,29] + mu[1,0,0,29] + mu[1,1,0,29] <= 1
+ R1040: 1e+06 alpha[1,1,39] >= 160.8483672219573
+ R1042: - 0.0775505340652316 point[0] + 17.3296716566187 point[1]
+   - 1e+06 alpha[2,1,39] <= 47.35051794068609
+ R1045: - 9.34238370289194 point[0] + 13.56631326898028 point[1]
+   - 1e+06 alpha[3,1,39] >= -1.0004751487672905e+06
+ R1046: alpha[0,1,39] - alpha[1,1,39] - mu[0,0,1,39] + mu[1,0,1,39] = 0
+ R1049: alpha[2,1,39] - alpha[3,1,39] - mu[0,1,1,39] + mu[1,1,1,39] = 0
+ R1052: mu[0,0,1,39] + mu[0,1,1,39] + mu[1,0,1,39] + mu[1,1,1,39] <= 1
+ qc0: [ - dist_inside ^2 + dif_inside[0] ^2 + dif_inside[1] ^2 ] <= 0
+ qc1: - 3.58806185784195 point[0] - 19.67551300739831 point[1]
+   - 1e+06 alpha[0,0,29] + [ ] <= -617.9335917937345
+ qc2: - 9.264833168826708 point[0] - 3.763358387638419 point[1]
+   - 1e+06 alpha[0,1,39] + [ ] >= -1.0006833476524531e+06
+Bounds
+ point[0] free
+ point[1] free
+ dif_inside[0] free
+ dif_inside[1] free
+Binaries
+ alpha[0,0,29] alpha[0,1,39] alpha[1,0,29] alpha[1,1,39] alpha[2,0,29]
+ alpha[2,1,39] alpha[3,0,29] alpha[3,1,39] mu[0,0,0,29] mu[0,0,1,39]
+ mu[0,1,0,29] mu[0,1,1,39] mu[1,0,0,29] mu[1,0,1,39] mu[1,1,0,29]
+ mu[1,1,1,39]
+End

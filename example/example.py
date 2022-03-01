@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, Polygon
 from matplotlib.collections import PatchCollection
 from data import *
-import entorno as e
+import neighborhood as e
 import copy
 import estimacion_M as eM
 from auxiliar_functions import *

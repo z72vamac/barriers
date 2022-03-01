@@ -1,7 +1,7 @@
 import gurobipy as gp
 import pdb
-from HTSPS_new import HTSPS_new
-from entorno import Circulo
+from tspn_b import HTSPS_new
+from neighborhood import Circle
 
 import numpy as np
 import pandas as pd
@@ -16,7 +16,7 @@ else:
 for nP in range(5, 31, 5):
     for instance in range(5):
         
-        print('Resolviendo la instancia ' + str(instance) + ' con un numero ' + str(nP) + ' de entornos.')
+        print('Resolviendo la instancia ' + str(instance) + ' con un numero ' + str(nP) + ' de neighborhoods.')
         
         segments = np.genfromtxt('./instancias/segmentos'+ str(nP) + '-' + str(instance) + '.csv', delimiter = ',')
 
@@ -26,7 +26,7 @@ for nP in range(5, 31, 5):
             
         bolas = np.genfromtxt('./instancias/bolas' + str(nP) + '-' + str(instance) + '.csv', delimiter = ',')
 
-        N = [Circulo(center = [centro1, centro2], radii = radio) for centro1, centro2, radio in bolas]
+        N = [Circle(center = [centro1, centro2], radii = radio) for centro1, centro2, radio in bolas]
 
         resultados = HTSPS_new(barriers, N)
         
