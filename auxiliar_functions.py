@@ -12,7 +12,8 @@ from matplotlib.collections import PatchCollection
 import matplotlib.lines as mlines
 import networkx as nx
 import itertools
-
+import sympy
+# from sympy.abc import x, y
 
 def path2matrix(path):
     "Toma un camino y lo devuelve como matriz de adyacencia"
@@ -665,64 +666,82 @@ def estima_det(neighborhood, barrera):
     if type(neighborhood) is neigh.Circle:
 
         # print((neighborhood.center, neighborhood.radii, barrera))
-        centro = neighborhood.center
+        center = neighborhood.center
         radio = neighborhood.radii
 
         a = 1
         b = 1
         c = 0
-        d = -2 * centro[0]
-        e = -2 * centro[1]
-        f = centro[0] ** 2 + centro[1] ** 2 - radio ** 2
+        d = -2 * center[0]
+        e = -2 * center[1]
+        f = center[0] ** 2 + center[1] ** 2 - radio ** 2
 
+        x, y = sympy.symbols("x y", real=True)
+
+        eq1 = sympy.Eq((2*a*(PB2x-PB1x)+c*(PB2y-PB1y))*x+(c*(PB2x-PB1x)+2*b*(PB2y-PB1y))*y+(d*(PB2x-PB1x)+e*(PB2y-PB1y)), 0)
+        eq2 = sympy.Eq(a*x**2+b*y**2+c*x*y+d*x+e*y+f, 0)
+
+        sols = sympy.solve([eq1, eq2])
+
+        x_mas = float(sols[0][x])
+        y_mas = float(sols[0][y])
+
+        x_menos = float(sols[1][x])
+        y_menos = float(sols[1][y])
+
+        eval_mas = determinant([x_mas, y_mas], [PB1x, PB1y], [PB2x, PB2y])
+        eval_menos = determinant([x_menos, y_menos], [PB1x, PB1y], [PB2x, PB2y])
+
+        L = min(eval_mas, eval_menos)
+        U = max(eval_mas, eval_menos)
         # print((a, b, c, d, e, f))
-        # Ecuacion seria entonces (x - centro[0])^2 + (y- centro[1])^2 <= radio^2
-        # x^2 + centro[0]^2 - 2x·centro[0] + y^2 + centro[1]^2 - 2y·centro[1] - radio^2 <= 0
-        # a = 1; b = 1; c = 0; d = -2·centro[0]; e = -2·centro[1]; f = centro[0]^2 + centro[1]^2 - radio^2
+        # Ecuacion seria entonces (x - center[0])^2 + (y- center[1])^2 <= radio^2
+        # x^2 + center[0]^2 - 2x·center[0] + y^2 + center[1]^2 - 2y·center[1] - radio^2 <= 0
+        # a = 1; b = 1; c = 0; d = -2·center[0]; e = -2·center[1]; f = center[0]^2 + center[1]^2 - radio^2
 
-        if abs(PB1y - PB2y) >= 1e-1:
-
-            m = (2 * a * (PB1x - PB2x) - c * (PB2y - PB1y)) / (2 * b * (PB2y - PB1y) - c * (PB1x - PB2x))
-            n = (d * (PB1x - PB2x) - e * (PB2y - PB1y)) / (2 * b * (PB2y - PB1y) - c * (PB1x - PB2x))
-
-            # print((m, n))
-
-            x_mas = (-(2 * b * m * n + c * n + d + e * m) + np.sqrt(
-                (2 * b * m * n + c * n + d + e * m) ** 2 - 4 * (a + b * m * m + c * m) * (n * n * b + e * n + f))) / (
-                                2 * (a + b * m * m + c * m))
-            x_menos = (-(2 * b * m * n + c * n + d + e * m) - np.sqrt(
-                (2 * b * m * n + c * n + d + e * m) ** 2 - 4 * (a + b * m * m + c * m) * (n * n * b + e * n + f))) / (
-                                  2 * (a + b * m * m + c * m))
-
-            # print((x_mas, x_menos))
-
-            y_mas = m * x_mas + n
-            y_menos = m * x_menos + n
-
-            # print((x_mas, y_mas))
-            # print((x_menos, y_menos))
-
-            eval_mas = x_mas * PB1y - x_mas * PB2y + y_mas * PB2x - y_mas * PB1x + PB1x * PB2y - PB1y * PB2x
-
-            eval_mas = determinant([x_mas, y_mas], [PB1x, PB1y], [PB2x, PB2y])
-            eval_menos = determinant([x_menos, y_menos], [PB1x, PB1y], [PB2x, PB2y])
-
-            # eval_menos = x_menos*PB1y - x_menos*PB2y + y_menos*PB2x - y_menos*PB1x + PB1x*PB2y - PB1y*PB2x
-
-            L = min(eval_mas, eval_menos)
-            # U = max(eval_mas, eval_menos)
-            U = max(eval_mas, eval_menos)
-
-        else:
-            x = centro[0]
-            y_mas = centro[1] + radio
-            y_menos = centro[1] - radio
-
-            eval_mas = x * PB1y - x * PB2y + y_mas * PB2x - y_mas * PB1x + PB1x * PB2y - PB1y * PB2x
-            eval_menos = x * PB1y - x * PB2y + y_menos * PB2x - y_menos * PB1x + PB1x * PB2y - PB1y * PB2x
-
-            L = min(eval_mas, eval_menos)
-            U = max(eval_mas, eval_menos)
+        # if abs(PB1y - PB2y) >= 1e-1:
+        #
+        #     m = (2 * a * (PB1x - PB2x) - c * (PB2y - PB1y)) / (2 * b * (PB2y - PB1y) - c * (PB1x - PB2x))
+        #     n = (d * (PB1x - PB2x) - e * (PB2y - PB1y)) / (2 * b * (PB2y - PB1y) - c * (PB1x - PB2x))
+        #
+        #     # print((m, n))
+        #
+        #     x_mas = (-(2 * b * m * n + c * n + d + e * m) + np.sqrt(
+        #         (2 * b * m * n + c * n + d + e * m) ** 2 - 4 * (a + b * m * m + c * m) * (n * n * b + e * n + f))) / (
+        #                         2 * (a + b * m * m + c * m))
+        #     x_menos = (-(2 * b * m * n + c * n + d + e * m) - np.sqrt(
+        #         (2 * b * m * n + c * n + d + e * m) ** 2 - 4 * (a + b * m * m + c * m) * (n * n * b + e * n + f))) / (
+        #                           2 * (a + b * m * m + c * m))
+        #
+        #     # print((x_mas, x_menos))
+        #
+        #     y_mas = m * x_mas + n
+        #     y_menos = m * x_menos + n
+        #
+        #     # print((x_mas, y_mas))
+        #     # print((x_menos, y_menos))
+        #
+        #     eval_mas = x_mas * PB1y - x_mas * PB2y + y_mas * PB2x - y_mas * PB1x + PB1x * PB2y - PB1y * PB2x
+        #
+        #     eval_mas = determinant([x_mas, y_mas], [PB1x, PB1y], [PB2x, PB2y])
+        #     eval_menos = determinant([x_menos, y_menos], [PB1x, PB1y], [PB2x, PB2y])
+        #
+        #     # eval_menos = x_menos*PB1y - x_menos*PB2y + y_menos*PB2x - y_menos*PB1x + PB1x*PB2y - PB1y*PB2x
+        #
+        #     L = min(eval_mas, eval_menos)
+        #     # U = max(eval_mas, eval_menos)
+        #     U = max(eval_mas, eval_menos)
+        #
+        # else:
+        #     x = center[0]
+        #     y_mas = center[1] + radio
+        #     y_menos = center[1] - radio
+        #
+        #     eval_mas = x * PB1y - x * PB2y + y_mas * PB2x - y_mas * PB1x + PB1x * PB2y - PB1y * PB2x
+        #     eval_menos = x * PB1y - x * PB2y + y_menos * PB2x - y_menos * PB1x + PB1x * PB2y - PB1y * PB2x
+        #
+        #     L = min(eval_mas, eval_menos)
+        #     U = max(eval_mas, eval_menos)
 
             # print(L)
         # print(U)

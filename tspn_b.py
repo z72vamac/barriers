@@ -305,12 +305,10 @@ def tspn_b(barriers, neighborhoods, prepro=True, log=False, dominant = False, pi
 
         model.addConstrs(
             (1 - alpha_1[a, c, d, e, f]) * small_m <= af.determinant(barriers[e][f], [point[a, 0, 0], point[a, 0, 1]],
-                                                                     barriers[c][d]) for
-            a, c, d, e, f in alpha_1.keys())
+                                                                     barriers[c][d]) for a, c, d, e, f in alpha_1.keys())
         model.addConstrs(
-            af.determinant(barriers[e][f], [point[a, 0, 0], point[a, 0, 1]], barriers[c][d]) <= big_m * alpha_1[
-                a, c, d, e, f] for
-            a, c, d, e, f in alpha_1.keys())
+            af.determinant(barriers[e][f], [point[a, 0, 0], point[a, 0, 1]], barriers[c][d]) <= big_m * alpha_1[a, c, d, e, f]
+            for a, c, d, e, f in alpha_1.keys())
 
         # model.addConstrs((1 - alpha_1[a, c, d, e, f])*estima_det(neighborhoods[abs(a)-1], [barriers[e][f], barriers[c][
         # d]])[0] <= af.determinant(barriers[e][f], [point[a, 0, 0], point[a, 0, 1]], barriers[c][d]) for a, c, d, e,
