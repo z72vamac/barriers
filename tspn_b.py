@@ -527,7 +527,7 @@ def tspn_b(barriers, neighborhoods, prepro=True, log=False, dominant = False, pi
         model.Params.Threads = 6
         model.Params.timeLimit = time_limit - time_elapsed
         # model.Params.LazyConstraints = 1
-        # model.Params.NumericFocus = 1
+        model.Params.NumericFocus = 1
         # model.Params.NonConvex = 2
 
         model.write('prueba.lp')

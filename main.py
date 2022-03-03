@@ -24,14 +24,14 @@ from HTSPS_new_ven import HTSPS_ven
 # from HTSPS_without_prepro import HTSPS_without_prepro
 
 
-# segments = np.genfromtxt('./instancias/segmentos35-9.csv', delimiter = ',')
-#
-# barriers = []
-# for lista in segments:
-#     barriers.append([[lista[0], lista[1]], [lista[2], lista[3]]])
-#
-# bolas = np.genfromtxt('./instancias/bolas35-9.csv', delimiter = ',')
-# N = [neigh.Circle(center = [centro1, centro2], radii = radio) for centro1, centro2, radio in bolas]
+segments = np.genfromtxt('./instancias/segmentos35-9.csv', delimiter = ',')
+
+barriers = []
+for lista in segments:
+    barriers.append([[lista[0], lista[1]], [lista[2], lista[3]]])
+
+bolas = np.genfromtxt('./instancias/bolas35-9.csv', delimiter = ',')
+N = [neigh.Circle(center = [centro1, centro2], radii = radio) for centro1, centro2, radio in bolas]
 # # segmentos_visitar = np.genfromtxt('./instancias/segmentos_visitar50-8.csv', delimiter = ',')
 # # N = [Poligonal(V = [np.array([lista[0], lista[1]]), np.array([lista[2], lista[3]])]) for lista in segmentos_visitar] # 105.164
 # # resultados = tspn_b(barriers, N, prepro = False, log = True, time_limit = 30)
@@ -41,24 +41,24 @@ from HTSPS_new_ven import HTSPS_ven
 # print(N)
 
 
-barrier1 = [[20, 80], [40, 30]]
-barrier2 = [[70, 95], [40, 70]]
-barrier3 = [[95, 60], [60, 70]]
-barrier4 = [[60, 50], [90, 10]]
-barrier5 = [[10, 70], [20, 50]]
-barrier6 = [[30, 70], [70, 20]]
-
-barriers = [barrier1, barrier2, barrier3, barrier4, barrier5]
+# barrier1 = [[20, 80], [40, 30]]
+# barrier2 = [[70, 95], [40, 70]]
+# barrier3 = [[95, 60], [60, 70]]
+# barrier4 = [[60, 50], [90, 10]]
+# barrier5 = [[10, 70], [20, 50]]
+# barrier6 = [[30, 70], [70, 20]]
+#
+# barriers = [barrier1, barrier2, barrier3, barrier4, barrier5]
 # barriers = [barrier1, barrier3, barrier4, barrier5]
 # barriers = [barrier1, barrier4]
 # barriers = [barrier3]
 
-N1 = neigh.Circle(center=[20, 10], radii=10)
-N2 = neigh.Circle(center=[90, 90], radii=5)
-N3 = neigh.Circle(center=[35, 85], radii=9)
-N4 = neigh.Circle(center=[85, 40], radii=11)
-
-N = [N1, N2, N3, N4]
+# N1 = neigh.Circle(center=[20, 10], radii=10)
+# N2 = neigh.Circle(center=[90, 90], radii=5)
+# N3 = neigh.Circle(center=[35, 85], radii=9)
+# N4 = neigh.Circle(center=[85, 40], radii=11)
+#
+# N = [N1, N2, N3, N4]
 # N = [N1, N4]
 
 # af.dominant_set(N, barriers)

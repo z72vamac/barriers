@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.2) (preloaded format=pdflatex 2021.10.7)  2 MAR 2022 17:40
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.2) (preloaded format=pdflatex 2021.10.7)  2 MAR 2022 17:52
 entering extended mode
 **./latest_version.tex
 (latest_version.tex
@@ -957,19 +957,19 @@ your preamble.
 * \@reversemarginfalse
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 66.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 67.
 
 
 (C:\Users\Justo Puerto\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 66.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 67.
 
 
 (C:\Users\Justo Puerto\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Trying to load font information for U+rsfs on input line 66
+LaTeX Font Info:    Trying to load font information for U+rsfs on input line 67
 .
 
 (C:\Users\Justo Puerto\AppData\Local\Programs\MiKTeX\tex/latex/jknappen\ursfs.f
@@ -977,7 +977,7 @@ d
 File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 )
 LaTeX Font Info:    Trying to load font information for T1+cmss on input line 6
-7.
+9.
 
 (C:\Users\Justo Puerto\AppData\Local\Programs\MiKTeX\tex/latex/base\t1cmss.fd
 File: t1cmss.fd 2019/12/16 v2.5j Standard LaTeX font definitions
@@ -995,22 +995,28 @@ File: pgflibraryarrows.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-) [1
+)
+Overfull \hbox (2.22168pt too wide) has occurred while \output is active
+[] 
+ []
+
+[1
+
 
 {C:/Users/Justo Puerto/AppData/Local/MiKTeX/pdftex/config/pdftex.map}]
 [2] (figures/Example_ H-SPP-S_ First Figure.tex) [3]
 
 Package natbib Warning: Citation `Lobo1998' on page 4 undefined on input line 1
-80.
+82.
 
 [4]
-Overfull \hbox (17.22168pt too wide) in paragraph at lines 251--265
+Overfull \hbox (17.22168pt too wide) in paragraph at lines 253--267
 []$[]$ $[]$ 
  []
 
 [5] (figures/Example_ H-SPP-S_ Solution.tex) [6]
 (figures/Example_ H-SPP-S_ Dominant.tex)
-Overfull \hbox (17.22168pt too wide) in paragraph at lines 378--390
+Overfull \hbox (17.22168pt too wide) in paragraph at lines 380--392
 []$[]$ $[]$ 
  []
 
@@ -1035,14 +1041,14 @@ File: tikzlibrarypositioning.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 ) [12] [13]
-Overfull \hbox (38.2824pt too wide) detected at line 763
+Overfull \hbox (38.2824pt too wide) detected at line 765
 []
  []
 
 [14]
 
 Package natbib Warning: Citation `GurobiOptimization2021' on page 15 undefined 
-on input line 828.
+on input line 830.
 
 (figures/runtime_boxplot_first_experiment.tex
 (C:\Users\Justo Puerto\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendla
@@ -1085,11 +1091,11 @@ LaTeX Warning: There were multiply-defined labels.
 
  ) 
 Here is how much of TeX's memory you used:
- 28926 strings out of 479334
- 714891 string characters out of 2853721
- 1321017 words of memory out of 3000000
- 45848 multiletter control sequences out of 15000+200000
- 417760 words of font info for 67 fonts, out of 3000000 for 9000
+ 28930 strings out of 479334
+ 714935 string characters out of 2853721
+ 1318055 words of memory out of 3000000
+ 45850 multiletter control sequences out of 15000+200000
+ 419214 words of font info for 69 fonts, out of 3000000 for 9000
  1141 hyphenation exceptions out of 8191
  87i,28n,88p,1073b,2335s stack positions out of 5000i,500n,10000p,200000b,50000s
  <C:\Users\Justo Puerto\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi6
@@ -1097,33 +1103,35 @@ Here is how much of TeX's memory you used:
 appen/ec/dpi600\ecbx0700.pk> <C:\Users\Justo Puerto\AppData\Local\MiKTeX\fonts/
 pk/ljfour/jknappen/ec/dpi600\ecss0800.pk> <C:\Users\Justo Puerto\AppData\Local\
 MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm0800.pk> <C:\Users\Justo Puerto\A
-ppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk> <C:\Users\J
-usto Puerto\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti1000.pk
+ppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecti0800.pk> <C:\Users\J
+usto Puerto\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1000.pk
 > <C:\Users\Justo Puerto\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi60
-0\ecss1000.pk> <C:\Users\Justo Puerto\AppData\Local\MiKTeX\fonts/pk/ljfour/jkna
-ppen/ec/dpi600\ecrm1000.pk> <C:\Users\Justo Puerto\AppData\Local\MiKTeX\fonts/p
-k/ljfour/jknappen/ec/dpi600\ecbx1000.pk><C:/Users/Justo Puerto/AppData/Local/Pr
-ograms/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/Justo Puerto/
-AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx7.pfb><C:/User
-s/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cme
-x10.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public
-/amsfonts/cm/cmmi10.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fo
-nts/type1/public/amsfonts/cm/cmmi5.pfb><C:/Users/Justo Puerto/AppData/Local/Pro
-grams/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/Justo Puerto/Ap
-pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi8.pfb><C:/Users/
-Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10
-.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/am
-sfonts/cm/cmr5.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/t
-ype1/public/amsfonts/cm/cmr7.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/
-MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/Justo Puerto/AppData/L
-ocal/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Justo 
-Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy5.pfb><
-C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts
-/cm/cmsy7.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/
-public/amsfonts/symbols/msbm10.pfb>
-Output written on latest_version.pdf (15 pages, 316928 bytes).
+0\ecti1000.pk> <C:\Users\Justo Puerto\AppData\Local\MiKTeX\fonts/pk/ljfour/jkna
+ppen/ec/dpi600\ecss1000.pk> <C:\Users\Justo Puerto\AppData\Local\MiKTeX\fonts/p
+k/ljfour/jknappen/ec/dpi600\ecbx1000.pk> <C:\Users\Justo Puerto\AppData\Local\M
+iKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1000.pk> <C:\Users\Justo Puerto\Ap
+pData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ecrm1440.pk><C:/Users/Jus
+to Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.p
+fb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsf
+onts/cm/cmbx7.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/ty
+pe1/public/amsfonts/cm/cmex10.pfb><C:/Users/Justo Puerto/AppData/Local/Programs
+/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/Justo Puerto/AppDat
+a/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi5.pfb><C:/Users/Just
+o Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb
+><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfon
+ts/cm/cmmi8.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type
+1/public/amsfonts/cm/cmr10.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/Mi
+KTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/Justo Puerto/AppData/Loc
+al/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/Justo Puer
+to/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Us
+ers/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/c
+msy10.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/fonts/type1/publ
+ic/amsfonts/cm/cmsy5.pfb><C:/Users/Justo Puerto/AppData/Local/Programs/MiKTeX/f
+onts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/Justo Puerto/AppData/Local/Pr
+ograms/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on latest_version.pdf (15 pages, 331761 bytes).
 PDF statistics:
- 385 PDF objects out of 1000 (max. 8388607)
+ 434 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  13 words of extra memory for PDF output out of 10000 (max. 10000000)
 
